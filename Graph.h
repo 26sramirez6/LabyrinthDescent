@@ -22,7 +22,7 @@ struct Manhattan {
 	}
 };
 
-template<typename NodeT, typename PriortyT, typename HeuristicT,
+template<typename NodeT, typename PriorityT, typename HeuristicT,
 	unsigned int NodeCount = 1024, unsigned int Connectors = 8>
 class LABYRINTHDESCENT_API Graph
 {
@@ -41,7 +41,7 @@ public:
 		return m_nodes[_target.id*Connectors];
 	}
 
-	inline PriortyT Cost(const NodeT* current, const NodeT* next) const {
+	inline PriorityT Cost(const NodeT* current, const NodeT* next) const {
 		return m_heuristic.calc(current, next);
 	}
 };
