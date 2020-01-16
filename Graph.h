@@ -30,6 +30,7 @@ public:
 	static constexpr unsigned int connector_size = Connectors;
 private:
 	GraphNode m_nodes[NodeCount*Connectors];
+	PriorityT m_weights[NodeCount*Connectors];
 	HeuristicT m_heuristic;
 
 public:
@@ -37,11 +38,15 @@ public:
 
 	~Graph();
 
-	inline NodeT* GetConnectors(const NodeT& current) {
-		return m_nodes[_target.id*Connectors];
+	inline NodeT* GetConnectors(const NodeT& _current) {
+		return m_nodes[_current.id*Connectors];
 	}
 
-	inline PriorityT Cost(const NodeT* current, const NodeT* next) const {
-		return m_heuristic.calc(current, next);
+	inline PriorityT Heuristic(const NodeT* _current, const NodeT* _next) const {
+		return m_heuristic.calc(_current, _next);
+	}
+
+	inline PriorityT EdgeWeight(const NodeT* _current, const NodeT* _neighbor) const {
+		return m_weights[_current->id + _neighbor->id % Connectors];
 	}
 };
