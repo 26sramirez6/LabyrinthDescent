@@ -27,7 +27,8 @@ template<typename NodeT, typename PriorityT, typename HeuristicT,
 class LABYRINTHDESCENT_API Graph
 {
 public:
-	static constexpr unsigned int connector_size = Connectors;
+	static constexpr unsigned int connectors = Connectors;
+	static constexpr unsigned int node_count = NodeCount;
 private:
 	GraphNode m_nodes[NodeCount*Connectors];
 	PriorityT m_weights[NodeCount*Connectors];

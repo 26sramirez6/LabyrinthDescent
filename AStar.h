@@ -30,6 +30,8 @@ public:
 		path_.emplace_back(_start);
 		costs_.push_back(0);
 		NodeT* current;
+		bool visited[GraphT::node_count] = { false };
+		bool costs[GraphT::node_count] = { 0 };
 		while (!frontier.empty()) {
 			current = frontier.top().second;
 			const uint16 current_id = current->id;
@@ -40,17 +42,17 @@ public:
 			}
 
 			NodeT* next = _graph.GetConnectors();
-			for (unsigned int i = 0; i < GraphT::connector_size; i++, next++) {
-				PriorityT new_cost = cost_so_far + _graph.EdgeWeight(current, next);
+			for (unsigned int i = 0; i < GraphT::connectors; i++, next++) {
 				const uint16 next_id = next->id;
-				if (new_cost < costs_[next_id]) {
-					costs_[next_id] = new_cost;
-					PriorityT priority = new_cost + _graph.Heuristic(current, next);
-					frontier.emplace()
+				PriorityT cost_to_next = costs_[next_id] + _graph.EdgeWeight(current, next);
+
+				if (!visited[next_id] || cost_to_next < costs_[next_id]) {
+					costs_[next_id] = cost_to_next;
+					PriorityT estimated_cost_to_goal = cost_to_next + _graph.Heuristic(current, next);
+					frontier.emplace(estimated_cost_to_goal, next);
+					visited[next_id] = true;
 				}
 			}
-
 		}
-
 	}
 };
