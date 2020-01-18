@@ -22,16 +22,17 @@ public:
 	void Search(const GraphT& _graph, 
 		NodeT const * const _start,
 		NodeT const * const _end,
-		std::vector<NodeT * const>& path_, 
-		std::vector<PriorityT>& costs_) {
+		std::vector<NodeT * const>& path_) {
 
-		std::priority_queue<Qitem, std::deque<Qitem>, std::greater<Qitem>> frontier;
+		std::priority_queue<Qitem, std::deque<Qitem>,
+			std::greater<Qitem>> frontier;
 		frontier.emplace(0, start);
 		path_.emplace_back(_start);
-		costs_.push_back(0);
-		NodeT* current;
+		
+		// move to a map? a lot of stack allocation for a call
 		bool visited[GraphT::node_count] = { false };
-		bool costs[GraphT::node_count] = { 0 };
+		PriorityT costs[GraphT::node_count] = { 0 };
+		NodeT* current;
 		while (!frontier.empty()) {
 			current = frontier.top().second;
 			const uint16 current_id = current->id;
