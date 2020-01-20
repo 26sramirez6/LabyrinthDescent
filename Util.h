@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+//#include "CoreMinimal.h"
+#include <type_traits>
+#include <cstdint>
 
 template<int ...I>
 struct IntSequence {};
@@ -21,6 +23,19 @@ struct IntSequence<I> {
 	static constexpr int max = I;
 	static constexpr int min = I;
 	static constexpr int size = 1;
+};
+
+template<int I1, int I2>
+struct Vector2 : IntSequence<I1, I2> {	
+	static constexpr int x = I1;
+	static constexpr int y = I2;
+};
+
+template<int I1, int I2, int I3>
+struct Vector3 : IntSequence<I1, I2, I3> {
+	static constexpr int x = I1;
+	static constexpr int y = I2;
+	static constexpr int z = I3;
 };
 
 template<int I, int... Is>
@@ -79,6 +94,11 @@ enum class Trim {
 template<int Start, int End, class Sequence, Trim Complete = Trim::Entry>
 struct Slice;
 
+template<int Start, int End, int... Is>
+struct Slice<Start, End, IntSequence<Is...>, Trim::None > {
+	using type = IntSequence<Is...>;
+};
+
 template<int Start, int End, int Head, int... Is>
 struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Entry > {
 	using type = typename Slice<
@@ -86,19 +106,14 @@ struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Entry > {
 		End,
 		IntSequence<Head, Is...>,
 		Start == 0 && End >= sizeof...(Is) + 1 ? Trim::None :
-		Start == 0 ? Trim::Back :
-		End >= sizeof...(Is) + 1 ? Trim::Front :
-		Trim::Both
+			Start == 0 ? Trim::Back :
+				End >= sizeof...(Is) + 1 ? Trim::Front :
+					Trim::Both
 	>::type;
 };
 
-template<int... Is>
-struct Slice<0, sizeof...(Is), IntSequence<Is...>, Trim::None > {
-	using type = IntSequence<Is...>;
-};
-
-template<int Start, int Head, int... Is>
-struct Slice<Start, sizeof...(Is) + 1, IntSequence<Head, Is...>, Trim::Front > {
+template<int Start, int End, int Head, int... Is>
+struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Front > {
 	using type = typename Slice<
 		Start - 1,
 		sizeof...(Is),
@@ -130,3 +145,17 @@ struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Both > {
 		Trim::Both
 	>::type;
 };
+
+
+#define MID ((lo + hi + 1) / 2)
+
+constexpr uint64_t 
+SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
+	return lo == hi ? lo : ((x / MID < MID)
+		? SqrtHelper(x, lo, MID - 1) : SqrtHelper(x, MID, hi));
+}
+
+constexpr uint64_t 
+CompileTimeSqrt(uint64_t x) {
+	return SqrtHelper(x, 0, x / 2 + 1);
+}
