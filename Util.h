@@ -25,17 +25,17 @@ struct IntSequence<I> {
 	static constexpr int size = 1;
 };
 
-template<int I1, int I2>
-struct Vector2 : IntSequence<I1, I2> {	
-	static constexpr int x = I1;
-	static constexpr int y = I2;
+template<int X, int Y>
+struct Vector2 : IntSequence<X, Y> {	
+	static constexpr int x = X;
+	static constexpr int y = Y;
 };
 
-template<int I1, int I2, int I3>
-struct Vector3 : IntSequence<I1, I2, I3> {
-	static constexpr int x = I1;
-	static constexpr int y = I2;
-	static constexpr int z = I3;
+template<int X, int Y, int Z>
+struct Vector3 : IntSequence<X, Y, Z> {
+	static constexpr int x = X;
+	static constexpr int y = Y;
+	static constexpr int z = Z;
 };
 
 template<int I, int... Is>
@@ -146,7 +146,6 @@ struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Both > {
 	>::type;
 };
 
-
 #define MID ((lo + hi + 1) / 2)
 
 constexpr uint64_t 
@@ -159,3 +158,10 @@ constexpr uint64_t
 CompileTimeSqrt(uint64_t x) {
 	return SqrtHelper(x, 0, x / 2 + 1);
 }
+
+template<typename T> struct IsVector3 : std::integral_constant<bool, false> {};
+template<int X, int Y, int Z> struct IsVector3<Vector3<X, Y, Z>> : std::integral_constant<bool, true> {};
+template<typename T> struct IsVector2 : std::integral_constant<bool, false> {};
+template<int X, int Y> struct IsVector2<Vector2<X, Y>> : std::integral_constant<bool, true> {};
+
+#define VALIDATE(Class, Validator) typename std::enable_if<Validator<Class>::value, int>::type=0

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "MyPlayerController.h"
+#include "TopologyTracer.h"
+#include "Util.h"
 #include "LabyrinthDescentGameModeBase.generated.h"
 
 /**
@@ -16,6 +18,8 @@ class LABYRINTHDESCENT_API ALabyrinthDescentGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	ATopologyTracer<Vector3<0,0,0>, Vector3<250, 250, 20>> m_tracer;
+
 	ALabyrinthDescentGameModeBase(const FObjectInitializer& ObjectInitializer)
 		: Super(ObjectInitializer) {
 		this->PlayerControllerClass = AMyPlayerController::StaticClass();

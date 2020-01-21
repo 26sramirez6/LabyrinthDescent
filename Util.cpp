@@ -1,5 +1,12 @@
 #include "Util.h"
 
+
+template<class Center, 
+VALIDATE(Center, IsVector3)>
+struct Test {
+	static constexpr unsigned size = Center::size;
+};
+
 int main() {
 	constexpr bool t1 = IntSequence<1,2,3,7,4>::max==7;
 	static_assert(t1, "t1 fail");
@@ -19,6 +26,11 @@ int main() {
 
 	using v = Vector3<4,5,6>;
 	static_assert(v::max*v::max==36,"");
+
+	using z = Test<Vector3<1,8,2>>;
+	static_assert(z::size==3, "");
+
+
 	return 0;
 
 }
