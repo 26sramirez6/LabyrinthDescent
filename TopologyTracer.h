@@ -42,17 +42,25 @@ public:
 		const FCollisionResponseParams _response;
 		for (unsigned i = 0; i < node_count_x; i++) {
 			for (unsigned j = 0; j < node_count_y; j++) {
-				const x = BottomLeftPoint.x + i;
-				const y = BottomLeftPoint.y + j;
-				const FVector _start = FVector(x, y, top_z);
-				const FVector _end = FVector(x, y, bot_z);
-				world->LineTraceSingleByChannel(
+				const _x = BottomLeftPoint.x + i;
+				const _y = BottomLeftPoint.y + j;
+				const FVector _start = FVector(_x, _y, top_z);
+				const FVector _end = FVector(_x, _y, bot_z);
+				const FColor _color;
+				if (world->LineTraceSingleByChannel(
 					out_hit,
 					_start,
 					_end,
 					ECollisionChannel.ECC_Visibility,
 					_query,
-					_response);
+					_response)) {
+					_color = FColor::Red;
+				} else {
+					_color = FColor::Blue;
+				};
+
+				DrawDebugLine(world, _start, _end, FColor::Blue, 
+					false, 5., ECollisionChannel.ECC_WorldStatic, 1.);
 			}
 		}
 	}
