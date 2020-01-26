@@ -7,6 +7,7 @@ struct Test {
 	static constexpr unsigned size = Center::size;
 };
 
+
 int main() {
 	constexpr bool t1 = IntSequence<1,2,3,7,4>::max==7;
 	static_assert(t1, "t1 fail");
@@ -29,8 +30,17 @@ int main() {
 
 	using z = Test<Vector3<1,8,2>>;
 	static_assert(z::size==3, "");
+	
+	static_assert(IsIntSequence<v>::value, "");
+	
+	
 
+	using x = ScalarMul<v, 4>::type;
+	static_assert(IntAtIndex<2, x>::value==24, "");
+	static_assert(x::sum==60, "");
 
+	static_assert(AreSameSize<x,v>::value, "");
+	
 	return 0;
 
 }

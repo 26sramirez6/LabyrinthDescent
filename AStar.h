@@ -4,7 +4,7 @@
 #include <queue>
 #include <functional>
 #include "CoreMinimal.h"
-#include "Graph.h"
+#include "GridGraph.h"
 
 /**
  * 
