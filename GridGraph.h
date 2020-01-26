@@ -11,10 +11,10 @@
 
 template<typename NodeT, typename PriorityT, typename HeuristicT,
 	typename DimensionsT, unsigned Connectors,
-VALIDATE(NodeT, IsGraphNode), 
-VALIDATE(PriorityT, std::is_arithmetic),
-VALIDATE(HeuristicT, IsHeuristic),
-VALIDATE(DimensionsT, IsVector3)>
+VALIDATE(IsGraphNode, NodeT),
+VALIDATE(std::is_arithmetic, PriorityT),
+VALIDATE(IsHeuristic, HeuristicT),
+VALIDATE(IsVector3, DimensionsT)>
 class LABYRINTHDESCENT_API GridGraph
 {
 public:

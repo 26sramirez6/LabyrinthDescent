@@ -11,6 +11,9 @@ struct IntSequence {};
 
 template<>
 struct IntSequence<> {
+	static constexpr int x = 0;
+	static constexpr int y = 0;
+	static constexpr int z = 0;
 	static constexpr int sum = 0;
 	static constexpr int max = 0;
 	static constexpr int min = 0;
@@ -19,27 +22,21 @@ struct IntSequence<> {
 
 template<int I>
 struct IntSequence<I> {
+	static constexpr int x = I;
+	static constexpr int y = 0;
+	static constexpr int z = 0;
 	static constexpr int sum = I;
 	static constexpr int max = I;
 	static constexpr int min = I;
 	static constexpr int size = 1;
 };
 
-template<int X, int Y>
-struct Vector2 : IntSequence<X, Y> {	
-	static constexpr int x = X;
-	static constexpr int y = Y;
-};
-
-template<int X, int Y, int Z>
-struct Vector3 : IntSequence<X, Y, Z> {
-	static constexpr int x = X;
-	static constexpr int y = Y;
-	static constexpr int z = Z;
-};
-
 template<int I, int... Is>
 struct IntSequence<I, Is...> {
+	using _t = IntSequence<Is...>;
+	static constexpr int x = I;
+	static constexpr int y = _t::x;
+	static constexpr int z = _t::y;
 	static constexpr int sum = I + IntSequence<Is...>::sum;
 	static constexpr int max = I > IntSequence<Is...>::max ?
 		I : IntSequence<Is...>::max;
@@ -48,11 +45,14 @@ struct IntSequence<I, Is...> {
 	static constexpr int size = 1 + IntSequence<Is...>::size;
 };
 
+template<int I1, int I2>
+using Vector2 = IntSequence<I1, I2>;
+template<int I1, int I2, int I3>
+using Vector3 = IntSequence<I1, I2, I3>;
+
 #define VALIDATE(Validator, ...) typename std::enable_if<Validator<__VA_ARGS__>::value, int>::type=0
 template<typename T> struct IsIntSequence : std::integral_constant<bool, false> {};
 template<int ...Is> struct IsIntSequence<IntSequence<Is...>> : std::integral_constant<bool, true> {};
-template<int ...Is> struct IsIntSequence<Vector3<Is...>> : std::integral_constant<bool, true> {};
-template<int ...Is> struct IsIntSequence<Vector2<Is...>> : std::integral_constant<bool, true> {};
 
 template<typename T> struct IsVector3 : std::integral_constant<bool, false> {};
 template<int X, int Y, int Z> struct IsVector3<Vector3<X, Y, Z>> : std::integral_constant<bool, true> {};
@@ -60,16 +60,10 @@ template<typename T> struct IsVector2 : std::integral_constant<bool, false> {};
 template<int X, int Y> struct IsVector2<Vector2<X, Y>> : std::integral_constant<bool, true> {};
 
 template<class Sequence1, class Sequence2,
-	VNEW(IsIntSequence, Sequence1),
-	VNEW(IsIntSequence, Sequence2)>
-struct AreSameSize {
+	VALIDATE(IsIntSequence, Sequence1),
+	VALIDATE(IsIntSequence, Sequence2)>
+struct IsSameSize {
 	static constexpr bool value = Sequence1::size == Sequence2::size;
-};
-
-template<class Sequence1, class Sequence2,
-	VNEW(AreSameSize, Sequence1, Sequence2)>
-struct Same {
-	static constexpr bool value = true;
 };
 
 template<int Index, class Sequence>
@@ -174,14 +168,10 @@ struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Both > {
 	>::type;
 };
 
-template<class T>
-struct multiplies { static constexpr T calc(const T& lhs, const T& rhs) { return lhs * rhs; } };
-template<class T>
-struct adds { static constexpr T calc(const T& lhs, const T& rhs) { return lhs + rhs; } };
-template<class T>
-struct subtracts { static constexpr T calc(const T& lhs, const T& rhs) { return lhs - rhs; } };
-template<class T>
-struct divides { static constexpr T calc(const T& lhs, const T& rhs) { return lhs / rhs; } };
+template<class T> struct multiplies { static constexpr T calc(const T& lhs, const T& rhs) { return lhs * rhs; } };
+template<class T> struct adds { static constexpr T calc(const T& lhs, const T& rhs) { return lhs + rhs; } };
+template<class T> struct subtracts { static constexpr T calc(const T& lhs, const T& rhs) { return lhs - rhs; } };
+template<class T> struct divides { static constexpr T calc(const T& lhs, const T& rhs) { return lhs / rhs; } };
 
 template<class Sequence, int I, class Operation,
 VALIDATE(IsIntSequence, Sequence)>
@@ -203,15 +193,6 @@ struct ScalarOperator<IntSequence<I, Is...>, K, Operation> {
 		typename ScalarOperator<IntSequence<Is...>, K, Operation>::type>::type;
 };
 
-// I wonder why Vector2 and Vector3 aren't picked up
-// automatically by the partial specialization
-template<int K, class Operation, int... Is>
-struct ScalarOperator<Vector3<Is...>, K, Operation> : ScalarOperator<IntSequence<Is...>, K, Operation> {};
-
-template<int K, class Operation, int... Is>
-struct ScalarOperator<Vector2<Is...>, K, Operation> : ScalarOperator<IntSequence<Is...>, K, Operation> {};
-
-
 template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)>
 struct ScalarMul : public ScalarOperator<Sequence, K, multiplies<int>> {};
 template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)>
@@ -221,28 +202,38 @@ struct ScalarAdd : public ScalarOperator<Sequence, K, adds<int>> {};
 template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence) >
 struct ScalarSub : public ScalarOperator<Sequence, K, subtracts<int>> {};
 
-
-template<class Sequence1, class Sequence1, class Operation,
-	VALIDATE(Sequence1, IsIntSequence),
-	VALIDATE(Sequence2, IsIntSequence),
-	VALIDATE(Sequence1, Sequence2, AreSameSize)>
+template<class Sequence1, class Sequence2, class Operation,
+	VALIDATE(IsIntSequence, Sequence1),
+	VALIDATE(IsIntSequence, Sequence2),
+	VALIDATE(IsSameSize, Sequence1, Sequence2)>
 	struct VectorOperator;
 
-template<int K, class Operation>
-struct VectorOperator<IntSequence<>, K, Operation> {
+template<class Operation>
+struct VectorOperator<IntSequence<>, IntSequence<>, Operation> {
 	using type = IntSequence<>;
 };
 
-template<int K, int I, class Operation>
-struct VectorOperator<IntSequence<I>, K, Operation> {
-	using type = IntSequence<Operation::calc(I, K)>;
+template<int I, int ...Is, class Operation, int J, int ...Js>
+struct VectorOperator<IntSequence<I, Is...>, IntSequence<J, Js...>, Operation> {
+	using type = typename Append<IntSequence<Operation::calc(I, J)>,
+		typename VectorOperator<IntSequence<Is...>, IntSequence<Js...>, Operation>::type>::type;
 };
 
-template<int K, int I, class Operation, int... Is>
-struct VectorOperator<IntSequence<I, Is...>, K, Operation> {
-	using type = typename Append<IntSequence<Operation::calc(I, K)>,
-		typename ScalarOperator<IntSequence<Is...>, K, Operation>::type>::type;
-};
+template<class Sequence1, class Sequence2,
+	VALIDATE(IsSameSize, Sequence1, Sequence2)>
+struct VectorMul : public VectorOperator<Sequence1, Sequence2, multiplies<int>> {};
+
+template<class Sequence1, class Sequence2,
+	VALIDATE(IsSameSize, Sequence1, Sequence2)>
+struct VectorAdd : public VectorOperator<Sequence1, Sequence2, adds<int>> {};
+
+template<class Sequence1, class Sequence2,
+	VALIDATE(IsSameSize, Sequence1, Sequence2)>
+struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
+
+template<class Sequence1, class Sequence2,
+	VALIDATE(IsSameSize, Sequence1, Sequence2)>
+struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
 
 #define MID ((lo + hi + 1) / 2)
 

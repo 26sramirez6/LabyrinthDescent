@@ -2,9 +2,16 @@
 
 
 template<class Center, 
-VALIDATE(Center, IsVector3)>
+VALIDATE(IsVector3, Center)>
 struct Test {
 	static constexpr unsigned size = Center::size;
+};
+
+
+template<class S1, class S2,
+	VALIDATE(IsSameSize, S1, S2)>
+	struct Test2 {
+		static constexpr unsigned size = S1::size;
 };
 
 
@@ -39,8 +46,19 @@ int main() {
 	static_assert(IntAtIndex<2, x>::value==24, "");
 	static_assert(x::sum==60, "");
 
-	static_assert(AreSameSize<x,v>::value, "");
-	
-	return 0;
+	//static_assert(AreSameSize<x,v>::value, "");
+	static_assert(Test2<IntSequence<1, 2>, IntSequence<2, 2>>::size == 2, "");
 
+	using q = VectorMul<IntSequence<4,5,6>, IntSequence<16, 20, 24>>::type;
+	static_assert(IntAtIndex<0, q>::value == 64, "");
+	static_assert(IntAtIndex<1, q>::value == 100, "");
+	static_assert(IntAtIndex<2, q>::value == 144, "");
+
+	static_assert(IsSameSize<Vector2<3, 2>, IntSequence<1, 1>>::value, "");
+	using b = VectorMul<x,v>::type;
+	static_assert(IntAtIndex<0, b>::value == 64, "");
+	static_assert(IntAtIndex<1, b>::value == 100, "");
+	static_assert(IntAtIndex<2, b>::value == 144, "");
+	static_assert(b::x == 64, "");
+	return 0;
 }

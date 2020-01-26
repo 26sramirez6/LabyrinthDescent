@@ -10,31 +10,32 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Util.h"
+#include "Heuristics.h"
 #include "GridGraph.h"
 #include "Node.h"
 #include "TopologyTracer.generated.h"
 
 template<class NodeT, typename PriorityT, class CenterVector, 
 	class BoundsVector, class HeuristicT, unsigned Connectors,
-	VALIDATE(NodeT, IsGraphNode),
-	VALIDATE(CenterVector, IsVector3),
-	VALIDATE(BoundsVector, IsVector3),
-	VALIDATE(HeuristicT, IsHeuristic)>
+	VALIDATE(IsGraphNode, NodeT),
+	VALIDATE(IsVector3, CenterVector),
+	VALIDATE(IsVector3, BoundsVector),
+	VALIDATE(IsHeuristic, HeuristicT)>
 struct TopologyTracer {
 	using PriorityT = PriorityT;
 	using NodeT = NodeT;
 	using Center = CenterVector;
 	using Bounds = BoundsVector;
 	using Dims = ScalarMul<Bounds, 2>::type;
-	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, Dims, Connectors>
+	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, Dims, Connectors>;
 	static constexpr uint64_t node_count_x = Dims::x;
 	static constexpr uint64_t node_count_y = Dims::y;
 	static constexpr uint64_t node_count = node_count_x * node_count_y;
 	//static constexpr uint64_t node_count_sqrt = CompileTimeSqrt(node_count);
 	static constexpr int top_z = Center::z + Bounds::z;
 	static constexpr int bot_z = Center::z - Bounds::z;
-	using TopLeftPoint = Vector3<Center::x + Bounds::x, Center::y + Bounds::y, Center::z + Bounds::z>;
-	using BottomLeftPoint = Vector3<Center::x - Bounds::x, Center::y - Bounds::y, Center::z - Bounds::z>;
+	using TopLeftPoint = VectorAdd<Center, Bounds>::type;
+	using BottomLeftPoint = VectorSub<Center, Bounds>::type;
 };
 
 
@@ -44,7 +45,8 @@ class LABYRINTHDESCENT_API ATopologyTracer : public AActor {
 	GENERATED_BODY()
 
 public:
-	using Tracer = TopologyTracer<GridNode, unsigned, Vector3<0, 0, 0>, Vector3<100, 100, 200>>;
+	using Tracer = TopologyTracer<GridNode, unsigned, Vector3<0, 0, 0>, 
+		Vector3<100, 100, 200>, Manhattan<GridNode>, 8>;
 	FVector m_world_center;
 	FVector m_world_bounds;
 
@@ -54,7 +56,7 @@ public:
 		m_world_bounds(Tracer::Bounds::x, Tracer::Bounds::y, Tracer::Bounds::z) {}
 
 	void
-	Trace(GridGraph * graph) {
+	Trace() {//GridGraph * graph
 		UE_LOG(LogTemp, Log, TEXT("Performing Trace"));
 		UWorld * world = this->GetWorld();
 		FHitResult out_hit;
@@ -68,7 +70,7 @@ public:
 				const unsigned _y = Tracer::BottomLeftPoint::y + i;
 				const FVector _start = FVector(_x, _y, Tracer::top_z);
 				const FVector _end = FVector(_x, _y, Tracer::bot_z);
-				nodes[j + i*Tracer::node_count_x].SetLocation();
+				//nodes[j + i*Tracer::node_count_x].SetLocation();
 
 				if (world->LineTraceSingleByChannel(
 					out_hit,
