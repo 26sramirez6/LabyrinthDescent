@@ -5,7 +5,6 @@
 //#include "CoreMinimal.h"
 #include <type_traits>
 #include <cstdint>
-
 template<int ...I>
 struct IntSequence {};
 
@@ -50,7 +49,7 @@ using Vector2 = IntSequence<I1, I2>;
 template<int I1, int I2, int I3>
 using Vector3 = IntSequence<I1, I2, I3>;
 
-#define VALIDATE(Validator, ...) typename std::enable_if<Validator<__VA_ARGS__>::value, int>::type=0
+#define VALIDATE(Validator, ...) typename std::enable_if<Validator<__VA_ARGS__>::value, int>::type
 template<typename T> struct IsIntSequence : std::integral_constant<bool, false> {};
 template<int ...Is> struct IsIntSequence<IntSequence<Is...>> : std::integral_constant<bool, true> {};
 
@@ -60,9 +59,9 @@ template<typename T> struct IsVector2 : std::integral_constant<bool, false> {};
 template<int X, int Y> struct IsVector2<Vector2<X, Y>> : std::integral_constant<bool, true> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsIntSequence, Sequence1),
-	VALIDATE(IsIntSequence, Sequence2)>
-struct IsSameSize {
+	VALIDATE(IsIntSequence, Sequence1) = 0,
+	VALIDATE(IsIntSequence, Sequence2) = 0>
+	struct IsSameSize {
 	static constexpr bool value = Sequence1::size == Sequence2::size;
 };
 
@@ -79,19 +78,23 @@ struct IntAtIndex<Index, IntSequence<I, Is...>> :
 	public IntAtIndex<Index - 1, IntSequence<Is...>> {
 };
 
-template<class First, class Second,
-VALIDATE(IsIntSequence, First),
-VALIDATE(IsIntSequence, Second)>
-struct Append;
-
-template<int... Ts, int... Us>
-struct Append<IntSequence<Ts...>, IntSequence<Us...>> {
-	using type = IntSequence<Ts..., Us...>;
+template<class First, class Second>
+struct Append {
+private:
+	using _throw1 = VALIDATE(IsIntSequence, First);
+	using _throw2 = VALIDATE(IsIntSequence, Second);
 };
 
-template<class Sequence,
-VALIDATE(IsIntSequence, Sequence)>
-struct PopBack {};
+template<int ...Is, int ...Js>
+struct Append<IntSequence<Is...>, IntSequence<Js...>> {
+	using type = IntSequence<Is..., Js...>;
+};
+
+template<class Sequence>
+struct PopBack {
+private:
+	using _throw = VALIDATE(IsIntSequence, Sequence);
+};
 
 template<int Last>
 struct PopBack<IntSequence<Last>> {
@@ -112,12 +115,14 @@ enum class Trim {
 	None
 };
 
-template<int Start, int End, class Sequence, Trim Complete = Trim::Entry,
-VALIDATE(IsIntSequence, Sequence)>
-struct Slice;
+template<int Start, int End, class Sequence, Trim Complete = Trim::Entry>
+struct Slice {
+private:
+	using _throw = VALIDATE(IsIntSequence, Sequence);
+};
 
 template<int Start, int End, int... Is>
-struct Slice<Start, End, IntSequence<Is...>, Trim::None > {
+struct Slice<Start, End, IntSequence<Is...>, Trim::None> {
 	using type = IntSequence<Is...>;
 };
 
@@ -128,9 +133,9 @@ struct Slice<Start, End, IntSequence<Head, Is...>, Trim::Entry > {
 		End,
 		IntSequence<Head, Is...>,
 		Start == 0 && End >= sizeof...(Is) + 1 ? Trim::None :
-			Start == 0 ? Trim::Back :
-				End >= sizeof...(Is) + 1 ? Trim::Front :
-					Trim::Both
+		Start == 0 ? Trim::Back :
+		End >= sizeof...(Is) + 1 ? Trim::Front :
+		Trim::Both
 	>::type;
 };
 
@@ -173,9 +178,11 @@ template<class T> struct adds { static constexpr T calc(const T& lhs, const T& r
 template<class T> struct subtracts { static constexpr T calc(const T& lhs, const T& rhs) { return lhs - rhs; } };
 template<class T> struct divides { static constexpr T calc(const T& lhs, const T& rhs) { return lhs / rhs; } };
 
-template<class Sequence, int I, class Operation,
-VALIDATE(IsIntSequence, Sequence)>
-struct ScalarOperator;
+template<class Sequence, int I, class Operation>
+struct ScalarOperator {
+private:
+	using _throw = VALIDATE(IsIntSequence, Sequence);
+};
 
 template<int K, class Operation>
 struct ScalarOperator<IntSequence<>, K, Operation> {
@@ -189,24 +196,26 @@ struct ScalarOperator<IntSequence<I>, K, Operation> {
 
 template<int K, int I, class Operation, int... Is>
 struct ScalarOperator<IntSequence<I, Is...>, K, Operation> {
-	using type = typename Append<IntSequence<Operation::calc(I,K)>,
+	using type = typename Append<IntSequence<Operation::calc(I, K)>,
 		typename ScalarOperator<IntSequence<Is...>, K, Operation>::type>::type;
 };
 
-template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)>
+template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)=0>
 struct ScalarMul : public ScalarOperator<Sequence, K, multiplies<int>> {};
-template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)>
+template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)=0>
 struct ScalarDiv : public ScalarOperator<Sequence, K, divides<int>> {};
-template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)>
+template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)=0>
 struct ScalarAdd : public ScalarOperator<Sequence, K, adds<int>> {};
-template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence) >
+template<class Sequence, int K, VALIDATE(IsIntSequence, Sequence)=0>
 struct ScalarSub : public ScalarOperator<Sequence, K, subtracts<int>> {};
 
-template<class Sequence1, class Sequence2, class Operation,
-	VALIDATE(IsIntSequence, Sequence1),
-	VALIDATE(IsIntSequence, Sequence2),
-	VALIDATE(IsSameSize, Sequence1, Sequence2)>
-	struct VectorOperator;
+template<class Sequence1, class Sequence2, class Operation>
+struct VectorOperator {
+private:
+	using _throw1 = VALIDATE(IsIntSequence, Sequence1);
+	using _throw2 = VALIDATE(IsIntSequence, Sequence2);
+	using _throw3 = VALIDATE(IsSameSize, Sequence1, Sequence2);
+};
 
 template<class Operation>
 struct VectorOperator<IntSequence<>, IntSequence<>, Operation> {
@@ -220,30 +229,30 @@ struct VectorOperator<IntSequence<I, Is...>, IntSequence<J, Js...>, Operation> {
 };
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)>
-struct VectorMul : public VectorOperator<Sequence1, Sequence2, multiplies<int>> {};
+	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+	struct VectorMul : public VectorOperator<Sequence1, Sequence2, multiplies<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)>
-struct VectorAdd : public VectorOperator<Sequence1, Sequence2, adds<int>> {};
+	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+	struct VectorAddLD : public VectorOperator<Sequence1, Sequence2, adds<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)>
-struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
+	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+	struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)>
-struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
+	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+	struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
 
 #define MID ((lo + hi + 1) / 2)
 
-constexpr uint64_t 
-SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
+constexpr uint64_t
+	SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
 	return lo == hi ? lo : ((x / MID < MID)
 		? SqrtHelper(x, lo, MID - 1) : SqrtHelper(x, MID, hi));
 }
 
-constexpr uint64_t 
-CompileTimeSqrt(uint64_t x) {
+constexpr uint64_t
+	CompileTimeSqrt(uint64_t x) {
 	return SqrtHelper(x, 0, x / 2 + 1);
 }

@@ -26,7 +26,7 @@ struct TopologyTracer {
 	using NodeT = NodeT;
 	using Center = CenterVector;
 	using Bounds = BoundsVector;
-	using Dims = ScalarMul<Bounds, 2>::type;
+	using Dims = Center //ScalarMul<Bounds, 2>::type;
 	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, Dims, Connectors>;
 	static constexpr uint64_t node_count_x = Dims::x;
 	static constexpr uint64_t node_count_y = Dims::y;
@@ -34,8 +34,8 @@ struct TopologyTracer {
 	//static constexpr uint64_t node_count_sqrt = CompileTimeSqrt(node_count);
 	static constexpr int top_z = Center::z + Bounds::z;
 	static constexpr int bot_z = Center::z - Bounds::z;
-	using TopLeftPoint = VectorAdd<Center, Bounds>::type;
-	using BottomLeftPoint = VectorSub<Center, Bounds>::type;
+	using TopLeftPoint = Center; //VectorAdd<Center, Bounds>::type;
+	using BottomLeftPoint = Center; //VectorSub<Center, Bounds>::type;
 };
 
 

@@ -11,18 +11,17 @@
 
 template<typename NodeT, typename PriorityT, typename HeuristicT,
 	typename DimensionsT, unsigned Connectors,
-VALIDATE(IsGraphNode, NodeT),
-VALIDATE(std::is_arithmetic, PriorityT),
-VALIDATE(IsHeuristic, HeuristicT),
-VALIDATE(IsVector3, DimensionsT)>
+VALIDATE(IsGraphNode, NodeT)=0,
+VALIDATE(std::is_arithmetic, PriorityT)=0,
+VALIDATE(IsHeuristic, HeuristicT)=0,
+VALIDATE(IsVector3, DimensionsT)=0>
 class LABYRINTHDESCENT_API GridGraph
 {
 public:
 	static constexpr uint64_t node_count_x = DimensionsT::x;
 	static constexpr uint64_t node_count_y = DimensionsT::y;
 	static constexpr uint64_t node_count = node_count_x * node_count_y;
-	static constexpr unsigned int connectors = Connectors;
-	static constexpr unsigned int node_count = NodeCount;
+	static constexpr unsigned connectors = Connectors;
 	static constexpr PriorityT max_weight = NodeCount + 1;
 private:
 	NodeT m_nodes[NodeCount];

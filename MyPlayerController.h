@@ -16,7 +16,7 @@ class LABYRINTHDESCENT_API AMyPlayerController : public APlayerController
 	GENERATED_BODY()
 	
 public:
-	void AMyPlayerController::SetupInputComponent() {
+	void SetupInputComponent() {
 		Super::SetupInputComponent();
 		if (!InputComponent) {
 			UE_LOG(LogTemp, Log, TEXT("Input component not initialized!"));
@@ -27,7 +27,7 @@ public:
 			IE_Pressed, this, &AMyPlayerController::SetTarget);
 	}
 
-	void AMyPlayerController::SetTarget() {
+	void SetTarget() {
 		float x, y;
 		this->GetMousePosition(x, y);
 		FVector2D mouse_position(x, y);

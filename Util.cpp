@@ -1,15 +1,14 @@
 #include "Util.h"
 
-
 template<class Center, 
-VALIDATE(IsVector3, Center)>
+VALIDATE(IsVector3, Center)=0>
 struct Test {
 	static constexpr unsigned size = Center::size;
 };
 
 
 template<class S1, class S2,
-	VALIDATE(IsSameSize, S1, S2)>
+	VALIDATE(IsSameSize, S1, S2)=0>
 	struct Test2 {
 		static constexpr unsigned size = S1::size;
 };
