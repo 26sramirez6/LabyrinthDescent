@@ -76,7 +76,7 @@ public:
 					out_hit,
 					_start,
 					_end,
-					ECC_Visibility,
+					ECC_Camera,
 					_query,
 					_response)) {
 					_color = FColor::Red;
@@ -84,8 +84,8 @@ public:
 					_color = FColor::Blue;
 				};
 
-				DrawDebugLine(world, _start, _end, FColor::Blue,
-					false, 50., ECC_WorldStatic, 1.);
+				DrawDebugLine(world, _start, _end, _color,
+					false, 50., ECC_Camera, 1.);
 			}
 		}
 	}

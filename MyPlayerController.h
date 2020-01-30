@@ -24,10 +24,10 @@ public:
 
 		checkf(InputComponent, TEXT("Input component not initialized"));
 		InputComponent->BindAction("SetTarget",
-			IE_Pressed, this, &AMyPlayerController::SetTarget);
+			IE_Pressed, this, &AMyPlayerController::SetTargetOnClick);
 	}
 
-	void SetTarget() {
+	void SetTargetOnClick() {
 		float x, y;
 		this->GetMousePosition(x, y);
 		FVector2D mouse_position(x, y);
@@ -40,5 +40,9 @@ public:
 				pawn->RecieveNewTarget(hit_result.Location);
 			}
 		}
+	}
+
+	void CameraScroll() {
+
 	}
 };

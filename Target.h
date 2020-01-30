@@ -15,7 +15,7 @@ public:
 	// Sets default values for this pawn's properties
 	ATarget(const FObjectInitializer& ObjectInitializer) :
 		Super(ObjectInitializer), m_target(ForceInitToZero) {
-
+		
 		// this crashes editor
 		//for (auto it = GetWorld()->GetPlayerControllerIterator(); it; ++it) {
 		//	this->Controller = (AController *)it->Get();
