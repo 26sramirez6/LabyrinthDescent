@@ -17,16 +17,16 @@
 
 template<class NodeT, typename PriorityT, class CenterVector, 
 	class BoundsVector, class HeuristicT, unsigned Connectors,
-	VALIDATE(IsGraphNode, NodeT),
-	VALIDATE(IsVector3, CenterVector),
-	VALIDATE(IsVector3, BoundsVector),
-	VALIDATE(IsHeuristic, HeuristicT)>
+	VALIDATE(IsGraphNode, NodeT)=0,
+	VALIDATE(IsVector3, CenterVector)=0,
+	VALIDATE(IsVector3, BoundsVector)=0,
+	VALIDATE(IsHeuristic, HeuristicT)=0>
 struct TopologyTracer {
-	using PriorityT = PriorityT;
-	using NodeT = NodeT;
+	using Priority = PriorityT;
+	using Node = NodeT;
 	using Center = CenterVector;
 	using Bounds = BoundsVector;
-	using Dims = Center //ScalarMul<Bounds, 2>::type;
+	using Dims = typename ScalarMul<Bounds, 2>::type;
 	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, Dims, Connectors>;
 	static constexpr uint64_t node_count_x = Dims::x;
 	static constexpr uint64_t node_count_y = Dims::y;
@@ -34,8 +34,8 @@ struct TopologyTracer {
 	//static constexpr uint64_t node_count_sqrt = CompileTimeSqrt(node_count);
 	static constexpr int top_z = Center::z + Bounds::z;
 	static constexpr int bot_z = Center::z - Bounds::z;
-	using TopLeftPoint = Center; //VectorAdd<Center, Bounds>::type;
-	using BottomLeftPoint = Center; //VectorSub<Center, Bounds>::type;
+	using TopLeftPoint = typename VectorAddLD<Center, Bounds>::type;
+	using BottomLeftPoint = typename VectorSub<Center, Bounds>::type;
 };
 
 

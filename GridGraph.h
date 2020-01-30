@@ -22,11 +22,11 @@ public:
 	static constexpr uint64_t node_count_y = DimensionsT::y;
 	static constexpr uint64_t node_count = node_count_x * node_count_y;
 	static constexpr unsigned connectors = Connectors;
-	static constexpr PriorityT max_weight = NodeCount + 1;
+	static constexpr PriorityT max_weight = node_count + 1;
 private:
-	NodeT m_nodes[NodeCount];
-	NodeT * m_connectors[NodeCount*Connectors];
-	PriorityT m_weights[NodeCount*Connectors];
+	NodeT m_nodes[node_count];
+	NodeT * m_connectors[node_count*Connectors];
+	PriorityT m_weights[node_count*Connectors];
 	HeuristicT m_heuristic;
 
 public:
