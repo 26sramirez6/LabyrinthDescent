@@ -4,45 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Target.h"
+#include "LiveGameHandler.h"
+#include "Engine/World.h"
+#include "UObject/NameTypes.h"
 #include "MyPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LABYRINTHDESCENT_API AMyPlayerController : public APlayerController
+class LABYRINTHDESCENT_API AMyPlayerController : public APlayerController 
 {
 	GENERATED_BODY()
 	
 public:
-	void SetupInputComponent() {
-		Super::SetupInputComponent();
-		if (!InputComponent) {
-			UE_LOG(LogTemp, Log, TEXT("Input component not initialized!"));
-		}
 
-		checkf(InputComponent, TEXT("Input component not initialized"));
-		InputComponent->BindAction("SetTarget",
-			IE_Pressed, this, &AMyPlayerController::SetTargetOnClick);
-	}
+	AMyPlayerController();
+	void SetupInputComponent() override;
+	void CameraScroll();
+	void OnRightClick();
 
-	void SetTargetOnClick() {
-		float x, y;
-		this->GetMousePosition(x, y);
-		FVector2D mouse_position(x, y);
-		FHitResult hit_result;
-		const bool trace_complex = false;
-		if (this->GetHitResultAtScreenPosition(
-			mouse_position, ECC_Visibility, trace_complex, hit_result)) {
-			ATarget * pawn = Cast<ATarget>(this->GetPawn());
-			if (pawn != nullptr && IsValid(pawn)) {
-				pawn->RecieveNewTarget(hit_result.Location);
-			}
-		}
-	}
-
-	void CameraScroll() {
-
-	}
+public:
+	ALiveGameHandler * m_live_game_handler;
+	bool m_in_live_game = true;
 };

@@ -6,6 +6,9 @@
 #include "GameFramework/Pawn.h"
 #include "Target.generated.h"
 
+// forward declared for friend
+class ALiveGameHandler;
+
 UCLASS()
 class LABYRINTHDESCENT_API ATarget : public APawn
 {
@@ -25,20 +28,17 @@ public:
 		if (this->IsPlayerControlled()) {
 			UE_LOG(LogTemp, Log, TEXT("Successfully controlled"));
 		}
-
-		PrimaryActorTick.bCanEverTick = true;
 	};
 
 private:
-	friend class AMyPlayerController;
+	friend class ALiveGameHandler;
 	FVector m_target;
 
-	UFUNCTION()
 	void RecieveNewTarget(const FVector& _target) { 
 		this->SetActorLocation(_target, false);
 		m_target.Set(_target.X, _target.Y, _target.Z);
 		UE_LOG(LogTemp, Log, TEXT("Target value: %s"), *m_target.ToString());
-	};//
+	};
 
 protected:
 	// Called when the game starts or when spawned
