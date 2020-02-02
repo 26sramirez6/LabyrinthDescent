@@ -10,7 +10,7 @@
 class ALiveGameHandler;
 
 UCLASS()
-class LABYRINTHDESCENT_API ATarget : public APawn
+class LABYRINTHDESCENT_API ATarget : public AActor
 {
 	GENERATED_BODY()
 
@@ -22,16 +22,18 @@ public:
 		// this crashes editor
 		//for (auto it = GetWorld()->GetPlayerControllerIterator(); it; ++it) {
 		//	this->Controller = (AController *)it->Get();
-		//}
+		//}		
 
+		//if (this->IsPlayerControlled()) {
+		//	UE_LOG(LogTemp, Log, TEXT("Successfully controlled"));
+		//}
 		PrimaryActorTick.bCanEverTick = true;
-		if (this->IsPlayerControlled()) {
-			UE_LOG(LogTemp, Log, TEXT("Successfully controlled"));
-		}
+
 	};
 
 private:
 	friend class ALiveGameHandler;
+	friend class AMyPlayerController;
 	FVector m_target;
 
 	void RecieveNewTarget(const FVector& _target) { 
@@ -49,6 +51,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };

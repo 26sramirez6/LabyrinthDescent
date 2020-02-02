@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "LiveGameHandler.h"
+#include "MyCamera.h"
+#include "LDPlayerCameraManager.h"
 #include "Engine/World.h"
 #include "UObject/NameTypes.h"
 #include "MyPlayerController.generated.h"
@@ -21,10 +23,13 @@ public:
 
 	AMyPlayerController();
 	void SetupInputComponent() override;
-	void CameraScroll();
 	void OnRightClick();
+	void OnMouseYaw(float axis);
+	void OnMousePitch(float axis);
 
 public:
 	ALiveGameHandler * m_live_game_handler;
+	ATarget * m_target;
+	ALDPlayerCameraManager * m_camera_manager;
 	bool m_in_live_game = true;
 };

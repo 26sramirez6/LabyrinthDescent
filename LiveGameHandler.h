@@ -9,7 +9,7 @@
 #include "LiveGameHandler.generated.h"
 
 UCLASS()
-class LABYRINTHDESCENT_API ALiveGameHandler : public APawn
+class LABYRINTHDESCENT_API ALiveGameHandler : public AActor
 {
 	GENERATED_BODY()
 
@@ -26,11 +26,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	friend class AMyPlayerController;
-	void SetLiveGameTargetOnClick();
+	//friend class AMyPlayerController;
+	//void SetLiveGameTargetOnClick();
 
-	ATarget* m_target;
+	//ATarget* m_target;
 };

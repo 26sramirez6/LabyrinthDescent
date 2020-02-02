@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "MyCamera.generated.h"
 
 UCLASS()
-class LABYRINTHDESCENT_API AMyCamera : public APawn
+class LABYRINTHDESCENT_API AMyCamera : public AActor
 {
 	GENERATED_BODY()
 
@@ -24,6 +27,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	USpringArmComponent* m_spring_arm;
+	UCameraComponent* m_camera;
+	UStaticMeshComponent* m_mesh;
+	FVector2D m_mouse_input;
 };
