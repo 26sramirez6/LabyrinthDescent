@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Camera/CameraComponent.h"
+#include "Camera/CameraActor.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "MyCamera.generated.h"
 
 UCLASS()
-class LABYRINTHDESCENT_API AMyCamera : public AActor
+class LABYRINTHDESCENT_API AMyCamera : public ACameraActor
 {
 	GENERATED_BODY()
 

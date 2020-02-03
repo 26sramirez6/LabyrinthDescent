@@ -19,17 +19,22 @@ class LABYRINTHDESCENT_API AMyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
-public:
-
+private:
 	AMyPlayerController();
 	void SetupInputComponent() override;
 	void OnRightClick();
-	void OnMouseYaw(float axis);
-	void OnMousePitch(float axis);
+	void OnCtrlPressed();
+	void OnCtrlReleased();
+	void OnMouseX(float axis);
+	void OnMouseY(float axis);
+	void OnMouseScroll(float axis);
+	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
 
 public:
 	ALiveGameHandler * m_live_game_handler;
 	ATarget * m_target;
 	ALDPlayerCameraManager * m_camera_manager;
 	bool m_in_live_game = true;
+	bool m_ctrl_pressed = false;
 };

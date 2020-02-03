@@ -8,4 +8,6 @@ ALDPlayerCameraManager::ALDPlayerCameraManager() {
 		m_camera = world->SpawnActor<AMyCamera>();
 	}
 	this->ViewTarget.SetNewTarget(m_camera);
+	this->AssignViewTarget(m_camera, this->ViewTarget);
+	AnimCameraActor = m_camera;
 }

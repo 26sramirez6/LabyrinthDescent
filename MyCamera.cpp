@@ -11,12 +11,12 @@ AMyCamera::AMyCamera() {
 	m_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = m_mesh;
 
-	FAttachmentTransformRules attatchment_rules{ EAttachmentRule::KeepRelative, false };
-
-	m_spring_arm->AttachToComponent(RootComponent, attatchment_rules, TEXT("TestSocketName"));
+	//FAttachmentTransformRules attachment_rules{ EAttachmentRule::KeepRelative, false };
+	m_spring_arm->AttachTo(RootComponent);
+	//m_spring_arm->AttachToComponent(RootComponent, attachment_rules, TEXT("TestSocketName"));
 	m_spring_arm->TargetArmLength = 350.f;
 	m_spring_arm->SetWorldRotation(FRotator(-60.f, 0.f, 0.f));
-	m_camera->AttachToComponent(m_spring_arm, attatchment_rules, USpringArmComponent::SocketName);
+	m_camera->AttachTo(m_spring_arm, USpringArmComponent::SocketName);
 }
 
 // Called when the game starts or when spawned
