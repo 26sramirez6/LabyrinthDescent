@@ -42,7 +42,7 @@ private:
 	USpringArmComponent* m_spring_arm;
 	UCameraComponent* m_camera;
 	UStaticMeshComponent* m_mesh;
-	FVector2D m_mouse_rotation_delta;
+ 	FVector2D m_mouse_rotation_delta;
 	FVector m_mouse_location_delta;
 	float m_arm_length_delta = 0.f;
 	static constexpr uint32 m_zoom_factor = 40;

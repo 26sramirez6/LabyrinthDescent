@@ -9,6 +9,8 @@
 #include "CoreMinimal.h"
 
 
+class ATopologyTracer; //forward
+
 template<typename NodeT, typename PriorityT, typename HeuristicT,
 	typename DimensionsT, unsigned Connectors,
 VALIDATE(IsGraphNode, NodeT)=0,
@@ -24,6 +26,7 @@ public:
 	static constexpr unsigned connectors = Connectors;
 	static constexpr PriorityT max_weight = node_count + 1;
 private:
+	friend class ATopologyTracer;
 	NodeT m_nodes[node_count];
 	NodeT * m_connectors[node_count*Connectors];
 	PriorityT m_weights[node_count*Connectors];

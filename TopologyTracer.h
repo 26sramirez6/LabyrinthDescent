@@ -16,26 +16,27 @@
 #include "TopologyTracer.generated.h"
 
 template<class NodeT, typename PriorityT, class CenterVector, 
-	class BoundsVector, class HeuristicT, unsigned Connectors,
+	class BoundsVector, class ScaleVector, class HeuristicT, uint16_t Connectors,
 	VALIDATE(IsGraphNode, NodeT)=0,
 	VALIDATE(IsVector3, CenterVector)=0,
 	VALIDATE(IsVector3, BoundsVector)=0,
+	VALIDATE(IsVector3, ScaleVector)=0,
 	VALIDATE(IsHeuristic, HeuristicT)=0>
 struct TopologyTracer {
 	using Priority = PriorityT;
 	using Node = NodeT;
 	using Center = CenterVector;
 	using Bounds = BoundsVector;
-	using Dims = typename ScalarMul<Bounds, 2>::type;
-	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, Dims, Connectors>;
-	static constexpr uint64_t node_count_x = Dims::x;
-	static constexpr uint64_t node_count_y = Dims::y;
-	static constexpr uint64_t node_count = node_count_x * node_count_y;
-	//static constexpr uint64_t node_count_sqrt = CompileTimeSqrt(node_count);
+	using NodeDims = typename ScalarMul<Bounds, 2>::type;
+	using Scale = ScaleVector;
+	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, NodeDims, Connectors>;
+	static constexpr uint16_t node_count_x = NodeDims::x;
+	static constexpr uint16_t node_count_y = NodeDims::y;
+	static constexpr uint16_t node_count = node_count_x * node_count_y;
 	static constexpr int top_z = Center::z + Bounds::z;
 	static constexpr int bot_z = Center::z - Bounds::z;
-	using TopLeftPoint = typename VectorAddLD<Center, Bounds>::type;
-	using BottomLeftPoint = typename VectorSub<Center, Bounds>::type;
+	using TopLeftPoint = typename VectorAddLD<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
+	using BottomLeftPoint = typename VectorSub<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
 };
 
 
@@ -45,8 +46,15 @@ class LABYRINTHDESCENT_API ATopologyTracer : public AActor {
 	GENERATED_BODY()
 
 public:
-	using Tracer = TopologyTracer<GridNode, unsigned, Vector3<0, 0, 0>, 
-		Vector3<100, 100, 200>, Manhattan<GridNode>, 8>;
+	using Tracer = TopologyTracer<
+		GridNode, 
+		uint16_t, 
+		Vector3<0, 0, 0>, 
+		Vector3<50, 50, 200>, 
+		Vector3<10, 10, 1>, 
+		Manhattan<GridNode>, 
+		8>;
+
 	FVector m_world_center;
 	FVector m_world_bounds;
 
@@ -56,7 +64,7 @@ public:
 		m_world_bounds(Tracer::Bounds::x, Tracer::Bounds::y, Tracer::Bounds::z) {}
 
 	void
-	Trace() {//GridGraph * graph
+	Trace(Tracer::Graph * graph) {
 		UE_LOG(LogTemp, Log, TEXT("Performing Trace"));
 		UWorld * world = this->GetWorld();
 		FHitResult out_hit;
@@ -64,14 +72,13 @@ public:
 		const FCollisionResponseParams _response;
 		FColor _color;
 
-		for (unsigned i = 0; i < Tracer::node_count_y; i++) {
-			for (unsigned j = 0; j < Tracer::node_count_x; j++) {
-				const unsigned _x = Tracer::BottomLeftPoint::x + j;
-				const unsigned _y = Tracer::BottomLeftPoint::y + i;
-				const FVector _start = FVector(_x, _y, Tracer::top_z);
-				const FVector _end = FVector(_x, _y, Tracer::bot_z);
-				//nodes[j + i*Tracer::node_count_x].SetLocation();
-
+		for (uint16_t i = 0; i < Tracer::node_count_y*Tracer::Scale::y; i+=Tracer::Scale::y) {
+			for (uint16_t j = 0; j < Tracer::node_count_x*Tracer::Scale::x; j+=Tracer::Scale::x) {
+				float _x = Tracer::BottomLeftPoint::x + j;
+				float _y = Tracer::BottomLeftPoint::y + i;
+				const FVector _start( _x, _y, Tracer::top_z );
+				const FVector _end( _x, _y, Tracer::bot_z );
+				Tracer::Node node = graph->m_nodes[j + i * Tracer::node_count_x];
 				if (world->LineTraceSingleByChannel(
 					out_hit,
 					_start,
@@ -79,13 +86,18 @@ public:
 					ECC_Camera,
 					_query,
 					_response)) {
+					// float->int16. pros/cons of keeping in int16 vs float
+					node.SetLocation(_x, _y, out_hit.Location.Z);
+					node.is_reachable = true;
 					_color = FColor::Red;
 				} else {
+					node.SetLocation(_x, _y, 0);
+					node.is_reachable = false;
 					_color = FColor::Blue;
 				};
-
-				DrawDebugLine(world, _start, _end, _color,
-					false, 50., ECC_Camera, 1.);
+				FVector point;
+				node.ToVector(point);
+				DrawDebugPoint(world, point, 5., _color, false, 50.);
 			}
 		}
 	}
