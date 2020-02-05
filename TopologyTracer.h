@@ -114,7 +114,7 @@ public:
 				Tracer::Node* next = m_base_graph->GetConnectors(_current);
 				FVector start, end;
 				_current.ToVector(start);
-				for (uint16_t i = 0; i < Tracer::Graph::connectors; i++, next++) {
+				for (uint16_t j = 0; j < Tracer::Graph::connectors; j++, next++) {
 					next->ToVector(end);
 					DrawDebugLine(world, start, end, _current.is_reachable ? FColor::Blue : FColor::Blue, false, time);
 				}

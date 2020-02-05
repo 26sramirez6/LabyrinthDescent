@@ -20,10 +20,10 @@ VALIDATE(IsVector3, DimensionsT)=0>
 class LABYRINTHDESCENT_API GridGraph
 {
 public:
-	static constexpr uint64_t node_count_x = DimensionsT::x;
-	static constexpr uint64_t node_count_y = DimensionsT::y;
-	static constexpr uint64_t node_count = node_count_x * node_count_y;
-	static constexpr unsigned connectors = Connectors;
+	static constexpr uint16_t node_count_x = DimensionsT::x;
+	static constexpr uint16_t node_count_y = DimensionsT::y;
+	static constexpr uint16_t node_count = node_count_x * node_count_y;
+	static constexpr uint16_t connectors = Connectors;
 	static constexpr PriorityT max_weight = node_count + 1;
 private:
 	friend class ATopologyTracer;
