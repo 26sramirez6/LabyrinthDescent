@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Target.h"
+#include "TopologyTracer.h"
 #include "MyCamera.h"
 #include "LiveGameHandler.generated.h"
 
@@ -39,13 +40,15 @@ private:
 	void SetLiveGameTargetOnClick();
 
 	ATarget* m_target;
+	ATopologyTracer* m_topo;
+
 	USpringArmComponent* m_spring_arm;
 	UCameraComponent* m_camera;
 	UStaticMeshComponent* m_mesh;
  	FVector2D m_mouse_rotation_delta;
 	FVector m_mouse_location_delta;
 	float m_arm_length_delta = 0.f;
-	static constexpr uint32 m_zoom_factor = 40;
-	static constexpr uint32 m_location_factor = 10;
-	static constexpr uint32 m_rotion_factor = 1;
+	static constexpr uint16 m_zoom_factor = 40;
+	static constexpr uint16 m_location_factor = 10;
+	static constexpr uint16 m_rotion_factor = 1;
 };

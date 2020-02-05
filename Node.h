@@ -8,7 +8,7 @@ struct GridNode {
 	GridNode() {}
 	GridNode(int16_t x_, int16_t y_, int16_t z_) : x(x_), y(y_), z(z_) {}
 	FORCEINLINE void SetLocation(int16_t x_, int16_t y_, int16_t z_) { x = x_; y = y_; z = z_; }
-	FORCEINLINE void ToVector(FVector& v) { v.Set(x, y, z); }
+	FORCEINLINE void ToVector(FVector& v) const { v.Set(x, y, z); }
 	
 };
 

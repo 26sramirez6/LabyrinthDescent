@@ -42,7 +42,7 @@ public:
 				break;
 			}
 
-			NodeT* next = _graph.GetConnectors();
+			NodeT* next = _graph.GetConnectors(current);
 			for (unsigned int i = 0; i < GraphT::connectors; i++, next++) {
 				const uint16 next_id = next->id;
 				PriorityT cost_to_next = costs_[next_id] + _graph.EdgeWeight(current, next);

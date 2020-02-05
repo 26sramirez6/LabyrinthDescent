@@ -50,21 +50,24 @@ public:
 		GridNode, 
 		uint16_t, 
 		Vector3<0, 0, 0>, 
-		Vector3<50, 50, 200>, 
+		Vector3<60, 60, 200>, 
 		Vector3<10, 10, 1>, 
 		Manhattan<GridNode>, 
 		8>;
 
-	FVector m_world_center;
-	FVector m_world_bounds;
-
 	ATopologyTracer(const FObjectInitializer& ObjectInitializer)
-		: Super(ObjectInitializer), 
-		m_world_center(Tracer::Center::x, Tracer::Center::y, Tracer::Center::z),
-		m_world_bounds(Tracer::Bounds::x, Tracer::Bounds::y, Tracer::Bounds::z) {}
+		: Super(ObjectInitializer) {
+		UE_LOG(LogTemp, Log, TEXT("Constructing Tracer"));
+		m_base_graph = new Tracer::Graph();
+	}
 
-	void
-	Trace(Tracer::Graph * graph) {
+	~ATopologyTracer() {
+		if (m_base_graph) {
+			delete m_base_graph;
+		}
+	}
+
+	void Trace() {
 		UE_LOG(LogTemp, Log, TEXT("Performing Trace"));
 		UWorld * world = this->GetWorld();
 		FHitResult out_hit;
@@ -78,7 +81,7 @@ public:
 				float _y = Tracer::BottomLeftPoint::y + i;
 				const FVector _start( _x, _y, Tracer::top_z );
 				const FVector _end( _x, _y, Tracer::bot_z );
-				Tracer::Node node = graph->m_nodes[j + i * Tracer::node_count_x];
+				Tracer::Node node = m_base_graph->m_nodes[j + i * Tracer::node_count_x];
 				if (world->LineTraceSingleByChannel(
 					out_hit,
 					_start,
@@ -89,15 +92,35 @@ public:
 					// float->int16. pros/cons of keeping in int16 vs float
 					node.SetLocation(_x, _y, out_hit.Location.Z);
 					node.is_reachable = true;
-					_color = FColor::Red;
+					//_color = FColor::Red;
 				} else {
-					node.SetLocation(_x, _y, 0);
+					node.SetLocation(_x, _y, 20);
 					node.is_reachable = false;
-					_color = FColor::Blue;
+					//_color = FColor::Blue;
 				};
+				//FVector point;
+				//node.ToVector(point);
+				//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
+				//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
+			}
+		}
+	}
+
+	void DebugDrawGraph(float time) {
+		UWorld * world = GetWorld();
+		if (IsValid(world)) {
+			for (uint16_t i = 0; i < Tracer::node_count; i++) {
+				const Tracer::Node _current = m_base_graph->m_nodes[i];
+				Tracer::Node* next = m_base_graph->GetConnectors(_current);
+				FVector start, end;
+				_current.ToVector(start);
+				for (uint16_t i = 0; i < Tracer::Graph::connectors; i++, next++) {
+					next->ToVector(end);
+					DrawDebugLine(world, start, end, _current.is_reachable ? FColor::Blue : FColor::Blue, false, time);
+				}
 				FVector point;
-				node.ToVector(point);
-				DrawDebugPoint(world, point, 5., _color, false, 50.);
+				_current.ToVector(point);
+				DrawDebugPoint(world, point, 5.f, _current.is_reachable ? FColor::Red : FColor::Blue, false, time);
 			}
 		}
 	}
@@ -105,6 +128,8 @@ public:
 protected:
 	virtual void BeginPlay() override {
 		Super::BeginPlay();
-		Trace();
 	};
+
+private:
+	ATopologyTracer::Tracer::Graph* m_base_graph{ nullptr };
 };

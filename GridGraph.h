@@ -33,19 +33,19 @@ private:
 	HeuristicT m_heuristic;
 
 public:
-	GridGraph(HeuristicT heuristic) : m_heuristic(heuristic) { InitializeData(); };
+	GridGraph() { InitializeData(); };
 
-	~GridGraph();
+	~GridGraph() {};
 
-	inline NodeT* GetConnectors(const NodeT& _current) {
+	FORCEINLINE NodeT* GetConnectors(const NodeT& _current) {
 		return m_connectors[_current.id*Connectors];
 	}
 
-	inline PriorityT Heuristic(const NodeT* _current, const NodeT* _next) const {
+	FORCEINLINE PriorityT Heuristic(const NodeT* _current, const NodeT* _next) const {
 		return m_heuristic.calc(_current, _next);
 	}
 
-	inline PriorityT EdgeWeight(const NodeT* _current, const NodeT* _neighbor) const {
+	FORCEINLINE PriorityT EdgeWeight(const NodeT* _current, const NodeT* _neighbor) const {
 		return m_weights[_current->id + _neighbor->id % Connectors];
 	}
 

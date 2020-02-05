@@ -1,10 +1,10 @@
 #pragma once
-
+#include<cstdint>
 #include "Node.h"
 
 template<typename NodeT>
 struct Manhattan {
-	inline int calc(NodeT* current, NodeT* next) const {
+	FORCEINLINE int16_t calc(NodeT* current, NodeT* next) const {
 		return std::abs(current->x - next->x) +
 			std::abs(current->y - next->y) +
 			std::abs(current->z - next->z);

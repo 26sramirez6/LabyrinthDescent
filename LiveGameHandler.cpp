@@ -6,11 +6,6 @@
 ALiveGameHandler::ALiveGameHandler() : m_mouse_rotation_delta(ForceInitToZero), 
 	m_mouse_location_delta(ForceInitToZero) {
 	PrimaryActorTick.bCanEverTick = true;
-	UWorld * world = GetWorld();
-	if (IsValid(world)) { // must surround in IsValid or crash on load
-		UE_LOG(LogTemp, Log, TEXT("Spawning members in LiveGameHandler"));
-		m_target = world->SpawnActor<ATarget>();
-	}
 
 	m_spring_arm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	m_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -22,6 +17,15 @@ ALiveGameHandler::ALiveGameHandler() : m_mouse_rotation_delta(ForceInitToZero),
 	m_spring_arm->TargetArmLength = 350.f;
 	m_spring_arm->SetWorldRotation(FRotator(-60.f, 0.f, 0.f));
 	m_camera->AttachToComponent(m_spring_arm, attachment_rules, USpringArmComponent::SocketName);
+
+	UWorld * world = GetWorld();
+	if (IsValid(world)) { // must surround in IsValid or crash on load
+		UE_LOG(LogTemp, Log, TEXT("Spawning members in LiveGameHandler"));
+		m_target = world->SpawnActor<ATarget>();
+		m_topo = world->SpawnActor<ATopologyTracer>();
+		m_topo->Trace();
+		m_topo->DebugDrawGraph(10.f);
+	}
 }
 
  //Called when the game starts or when spawned
