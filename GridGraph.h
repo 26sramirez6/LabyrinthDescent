@@ -37,15 +37,15 @@ public:
 
 	~GridGraph() {};
 
-	FORCEINLINE NodeT* GetConnectors(const NodeT& _current) {
-		return m_connectors[_current.id*Connectors];
+	FORCEINLINE NodeT* const * GetConnectors(const NodeT& _current) const {
+		return &m_connectors[_current.id*Connectors];
 	}
 
-	FORCEINLINE PriorityT Heuristic(const NodeT* _current, const NodeT* _next) const {
+	FORCEINLINE PriorityT Heuristic(NodeT const * _current, NodeT const * _next) const {
 		return m_heuristic.calc(_current, _next);
 	}
 
-	FORCEINLINE PriorityT EdgeWeight(const NodeT* _current, const NodeT* _neighbor) const {
+	FORCEINLINE PriorityT EdgeWeight(NodeT const * _current, NodeT const * _neighbor) const {
 		return m_weights[_current->id + _neighbor->id % Connectors];
 	}
 
@@ -53,10 +53,9 @@ private:
 	void InitializeData() {
 		for (unsigned i = 0; i < node_count_y; i++) {
 			for (unsigned j = 0; j < node_count_x; j++) {
-				const uint16_t node_id = i*node_count_y + j;
+				const uint16_t node_id = i*node_count_x + j;
 				m_nodes[node_id].id = node_id;
-				const uint16_t current = node_id*Connectors;
-
+				const uint32_t current = node_id*Connectors;
 				// bot
 				m_connectors[current] = (i == 0 || j == 0) ?
 					nullptr : &m_nodes[node_id - node_count_x - 1];

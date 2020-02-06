@@ -24,7 +24,7 @@ ALiveGameHandler::ALiveGameHandler() : m_mouse_rotation_delta(ForceInitToZero),
 		m_target = world->SpawnActor<ATarget>();
 		m_topo = world->SpawnActor<ATopologyTracer>();
 		m_topo->Trace();
-		m_topo->DebugDrawGraph(10.f);
+		m_topo->DebugDrawGraph(100.f);
 	}
 }
 

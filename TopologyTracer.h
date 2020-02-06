@@ -30,9 +30,12 @@ struct TopologyTracer {
 	using NodeDims = typename ScalarMul<Bounds, 2>::type;
 	using Scale = ScaleVector;
 	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, NodeDims, Connectors>;
+	
+	static constexpr uint16_t connectors = Connectors;
 	static constexpr uint16_t node_count_x = NodeDims::x;
 	static constexpr uint16_t node_count_y = NodeDims::y;
 	static constexpr uint16_t node_count = node_count_x * node_count_y;
+
 	static constexpr int top_z = Center::z + Bounds::z;
 	static constexpr int bot_z = Center::z - Bounds::z;
 	using TopLeftPoint = typename VectorAddLD<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
@@ -50,7 +53,7 @@ public:
 		GridNode, 
 		uint16_t, 
 		Vector3<0, 0, 0>, 
-		Vector3<60, 60, 200>, 
+		Vector3<50, 50, 200>, 
 		Vector3<10, 10, 1>, 
 		Manhattan<GridNode>, 
 		8>;
@@ -74,14 +77,14 @@ public:
 		const FCollisionQueryParams _query;
 		const FCollisionResponseParams _response;
 		FColor _color;
-
+		uint16_t id = 0;
 		for (uint16_t i = 0; i < Tracer::node_count_y*Tracer::Scale::y; i+=Tracer::Scale::y) {
 			for (uint16_t j = 0; j < Tracer::node_count_x*Tracer::Scale::x; j+=Tracer::Scale::x) {
-				float _x = Tracer::BottomLeftPoint::x + j;
-				float _y = Tracer::BottomLeftPoint::y + i;
+				const float _x = Tracer::BottomLeftPoint::x + j;
+				const float _y = Tracer::BottomLeftPoint::y + i;
 				const FVector _start( _x, _y, Tracer::top_z );
 				const FVector _end( _x, _y, Tracer::bot_z );
-				Tracer::Node node = m_base_graph->m_nodes[j + i * Tracer::node_count_x];
+				Tracer::Node node = m_base_graph->m_nodes[id++];
 				if (world->LineTraceSingleByChannel(
 					out_hit,
 					_start,
@@ -92,14 +95,15 @@ public:
 					// float->int16. pros/cons of keeping in int16 vs float
 					node.SetLocation(_x, _y, out_hit.Location.Z);
 					node.is_reachable = true;
-					//_color = FColor::Red;
+					_color = FColor::Red;
 				} else {
 					node.SetLocation(_x, _y, 20);
 					node.is_reachable = false;
-					//_color = FColor::Blue;
+					_color = FColor::Blue;
 				};
-				//FVector point;
-				//node.ToVector(point);
+				FVector point;
+				node.ToVector(point);
+				UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d at %s"), node.id, *point.ToString());
 				//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
 				//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
 			}
@@ -109,18 +113,23 @@ public:
 	void DebugDrawGraph(float time) {
 		UWorld * world = GetWorld();
 		if (IsValid(world)) {
+			FVector start, end;
 			for (uint16_t i = 0; i < Tracer::node_count; i++) {
 				const Tracer::Node _current = m_base_graph->m_nodes[i];
-				Tracer::Node* next = m_base_graph->GetConnectors(_current);
-				FVector start, end;
+				Tracer::Node * next = m_base_graph->m_connectors[i];
+				
 				_current.ToVector(start);
-				for (uint16_t j = 0; j < Tracer::Graph::connectors; j++, next++) {
-					next->ToVector(end);
-					DrawDebugLine(world, start, end, _current.is_reachable ? FColor::Blue : FColor::Blue, false, time);
+				DrawDebugPoint(world, start, 5.f, _current.is_reachable ? FColor::Red : FColor::Blue, false, time);
+				UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d at %s"), _current.id, *start.ToString());
+
+				const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
+				for (uint16_t j = 0; j < Tracer::Graph::connectors; j++) {
+					Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
+					if (next) {
+						next->ToVector(end);
+						//DrawDebugLine(world, start, end, _current.is_reachable ? FColor::Blue : FColor::Blue, false, time);
+					}
 				}
-				FVector point;
-				_current.ToVector(point);
-				DrawDebugPoint(world, point, 5.f, _current.is_reachable ? FColor::Red : FColor::Blue, false, time);
 			}
 		}
 	}
