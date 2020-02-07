@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MyCamera.h"
 #include "Camera/PlayerCameraManager.h"
 #include "LDPlayerCameraManager.generated.h"
 
@@ -17,5 +16,5 @@ class LABYRINTHDESCENT_API ALDPlayerCameraManager : public APlayerCameraManager
 	
 public:
 	ALDPlayerCameraManager();
-	AMyCamera * m_camera;
+	//AMyCamera * m_camera;
 };

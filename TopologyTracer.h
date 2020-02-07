@@ -78,12 +78,14 @@ public:
 		const FCollisionResponseParams _response;
 		FColor _color;
 		uint16_t id = 0;
+		Tracer::Node * current;
 		for (uint16_t i = 0; i < Tracer::node_count_y*Tracer::Scale::y; i+=Tracer::Scale::y) {
 			for (uint16_t j = 0; j < Tracer::node_count_x*Tracer::Scale::x; j+=Tracer::Scale::x, id++) {
 				const float _x = Tracer::BottomLeftPoint::x + j;
 				const float _y = Tracer::BottomLeftPoint::y + i;
 				const FVector _start( _x, _y, Tracer::top_z );
 				const FVector _end( _x, _y, Tracer::bot_z );
+				current = &m_base_graph->m_nodes[id];
 				if (world->LineTraceSingleByChannel(
 					out_hit,
 					_start,
@@ -92,17 +94,17 @@ public:
 					_query,
 					_response)) {
 					// float->int16. pros/cons of keeping in int16 vs float
-					m_base_graph->m_nodes[id].SetLocation(_x, _y, out_hit.Location.Z);
-					m_base_graph->m_nodes[id].is_reachable = true;
+					current->SetLocation(_x, _y, out_hit.Location.Z);
+					current->is_reachable = true;
 					_color = FColor::Red;
 				} else {
-					m_base_graph->m_nodes[id].SetLocation(_x, _y, 20);
-					m_base_graph->m_nodes[id].is_reachable = false;
+					current->SetLocation(_x, _y, 20);
+					current->is_reachable = false;
 					_color = FColor::Blue;
 				};
 				FVector point;
-				m_base_graph->m_nodes[id].ToVector(point);
-				UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d, %p at %s"), m_base_graph->m_nodes[id].id, &m_base_graph->m_nodes[id], *point.ToString());
+				current->ToVector(point);
+				//UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d, %p at %s"), current->id, current, *point.ToString());
 				//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
 				//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
 			}
@@ -113,18 +115,20 @@ public:
 		UWorld * world = GetWorld();
 		if (IsValid(world)) {
 			FVector start, end;
+			Tracer::Node * current;
 			for (uint16_t i = 0; i < Tracer::node_count; i++) {
 				Tracer::Node * next = m_base_graph->m_connectors[i];
-				m_base_graph->m_nodes[i].ToVector(start);
-				DrawDebugPoint(world, start, 5.f, m_base_graph->m_nodes[i].is_reachable ? FColor::Red : FColor::Blue, false, time);
-				UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s"), m_base_graph->m_nodes[i].id, &m_base_graph->m_nodes[i], *start.ToString());
+				current = &m_base_graph->m_nodes[i];
+				current->ToVector(start);
+				DrawDebugPoint(world, start, 5.f, current->is_reachable ? FColor::Red : FColor::Blue, false, time);
+				//UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s"), current->id, current, *start.ToString());
 
 				const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
 				for (uint16_t j = 0; j < Tracer::Graph::connectors; j++) {
 					Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
 					if (next) {
 						next->ToVector(end);
-						DrawDebugLine(world, start, end, m_base_graph->m_nodes[i].is_reachable ? FColor::Blue : FColor::Blue, false, time);
+						DrawDebugLine(world, start, end, current->is_reachable ? FColor::Blue : FColor::Blue, false, time, 0, .5f);
 					}
 				}
 			}

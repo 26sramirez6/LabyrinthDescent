@@ -29,11 +29,17 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	FORCEINLINE void AdjustSpringArmLength(float axis) { m_arm_length_delta = m_zoom_factor*axis; }
-	FORCEINLINE void AdjustCameraYaw(float axis) { m_mouse_rotation_delta.X = m_rotion_factor*axis; }
-	FORCEINLINE void AdjustCameraPitch(float axis) { m_mouse_rotation_delta.Y = m_rotion_factor*axis; }
-	FORCEINLINE void AdjustCameraX(float axis) { m_mouse_location_delta.X = m_location_factor *axis; }
-	FORCEINLINE void AdjustCameraY(float axis) { m_mouse_location_delta.Y = m_location_factor *axis; }
+	FORCEINLINE void AdjustSpringArmLengthByAxis(float axis) { m_arm_length_delta = m_zoom_factor*axis; }
+	FORCEINLINE void AdjustCameraYawByAxis(float axis) { m_mouse_rotation_delta.X = m_rotion_factor*axis; }
+	FORCEINLINE void AdjustCameraPitchByAxis(float axis) { m_mouse_rotation_delta.Y = m_rotion_factor*axis; }
+
+	FORCEINLINE void IncrementCameraLocationX() { m_spring_arm->AddRelativeLocation(m_delta_camera_inc_x); }
+
+	FORCEINLINE void IncrementCameraLocationY() { m_spring_arm->AddRelativeLocation(m_delta_camera_inc_y); }
+
+	FORCEINLINE void DecrementCameraLocationX() { m_spring_arm->AddRelativeLocation(m_delta_camera_dec_x); }
+
+	FORCEINLINE void DecrementCameraLocationY() { m_spring_arm->AddRelativeLocation(m_delta_camera_dec_y); }
 
 private:
 	friend class AMyPlayerController;
@@ -48,6 +54,12 @@ private:
  	FVector2D m_mouse_rotation_delta;
 	FVector m_mouse_location_delta;
 	float m_arm_length_delta = 0.f;
+
+	static FVector m_delta_camera_inc_x;
+	static FVector m_delta_camera_dec_x;
+	static FVector m_delta_camera_inc_y;
+	static FVector m_delta_camera_dec_y;
+
 	static constexpr uint16 m_zoom_factor = 40;
 	static constexpr uint16 m_location_factor = 10;
 	static constexpr uint16 m_rotion_factor = 1;

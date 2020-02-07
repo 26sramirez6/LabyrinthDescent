@@ -25,6 +25,7 @@ ALiveGameHandler::ALiveGameHandler() : m_mouse_rotation_delta(ForceInitToZero),
 		m_topo = world->SpawnActor<ATopologyTracer>();
 		m_topo->Trace();
 		m_topo->DebugDrawGraph(100.f);
+
 	}
 }
 
@@ -44,7 +45,7 @@ void ALiveGameHandler::Tick(float DeltaTime) {
 	FRotator new_pitch = m_spring_arm->GetComponentRotation();
 	new_pitch.Pitch = FMath::Clamp(new_pitch.Pitch + m_mouse_rotation_delta.Y, -80.f, 0.f);
 	m_spring_arm->SetWorldRotation(new_pitch);
-	m_spring_arm->AddRelativeLocation(m_mouse_location_delta);
+	//m_spring_arm->AddRelativeLocation(m_mouse_location_delta);
 	m_spring_arm->TargetArmLength = FMath::Clamp(m_spring_arm->TargetArmLength - 
 		m_arm_length_delta, 0.f, 2000.f);
 }
@@ -61,3 +62,8 @@ void ALiveGameHandler::SetLiveGameTargetOnClick() {
 		m_target->RecieveNewTarget(hit_result.Location);
 	}
 }
+
+FVector ALiveGameHandler::m_delta_camera_inc_x = { 50, 0, 0 };
+FVector ALiveGameHandler::m_delta_camera_dec_x = { -50, 0, 0 };
+FVector ALiveGameHandler::m_delta_camera_inc_y = { 0, 50, 0 };
+FVector ALiveGameHandler::m_delta_camera_dec_y = { 0, -50, 0 };

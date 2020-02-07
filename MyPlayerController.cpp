@@ -5,12 +5,22 @@
 AMyPlayerController::AMyPlayerController() {
 	PrimaryActorTick.bCanEverTick = true;
 	bAutoManageActiveCameraTarget = false;
+	bShowMouseCursor = true;
+	bEnableClickEvents = true;
+	bEnableMouseOverEvents = true;
 	PlayerCameraManagerClass = ALDPlayerCameraManager::StaticClass();
-
-	UWorld * world = GetWorld();
-	if (IsValid(world)) { // must surround in IsValid or crash on load
-		UE_LOG(LogTemp, Log, TEXT("Spawning members in PC"));//
+	if (GEngine && GEngine->GameViewport) {
+		m_viewport = GEngine->GameViewport->Viewport;
+		m_vp_size = GEngine->GameViewport->Viewport->GetSizeXY();
+		m_edge_scroll_y.Set(static_cast<float>(m_vp_size.Y) / m_edge_factor,
+			static_cast<float>(m_vp_size.Y) - static_cast<float>(m_vp_size.Y) / m_edge_factor);
+		m_edge_scroll_x.Set(static_cast<float>(m_vp_size.X) / m_edge_factor,
+			static_cast<float>(m_vp_size.X) - static_cast<float>(m_vp_size.X) / m_edge_factor);
 	}
+	
+	UE_LOG(LogTemp, Log, TEXT("Viewport Size: %s"), *m_vp_size.ToString());
+	UE_LOG(LogTemp, Log, TEXT("Edge Scroll Y: %s"), *m_edge_scroll_x.ToString());
+	UE_LOG(LogTemp, Log, TEXT("Edge Scroll X: %s"), *m_edge_scroll_y.ToString());
 }
 
 void AMyPlayerController::BeginPlay() {
@@ -57,9 +67,16 @@ void AMyPlayerController::OnRightClick() {
 void AMyPlayerController::OnMouseX(float axis) {
 	if (m_in_live_game && IsValid(m_live_game_handler)) {
 		if (m_ctrl_pressed) {
-			m_live_game_handler->AdjustCameraYaw(axis);
+			m_live_game_handler->AdjustCameraYawByAxis(axis);
 		} else {
-			m_live_game_handler->AdjustCameraY(axis);
+			float x, y;
+			if (LIKELY(GetMousePosition(x, y))) { 
+				if (x < m_edge_scroll_x.X) {
+					m_live_game_handler->DecrementCameraLocationY();
+				} else if (x > m_edge_scroll_x.Y) {
+					m_live_game_handler->IncrementCameraLocationY();
+				}
+			}
 		}
 	}
 }
@@ -67,15 +84,22 @@ void AMyPlayerController::OnMouseX(float axis) {
 void AMyPlayerController::OnMouseY(float axis) {
 	if (m_in_live_game && IsValid(m_live_game_handler)) {
 		if (m_ctrl_pressed) {
-			m_live_game_handler->AdjustCameraPitch(axis);
+			m_live_game_handler->AdjustCameraPitchByAxis(axis);
 		} else {
-			m_live_game_handler->AdjustCameraX(axis);
+			float x, y;
+			if (LIKELY(GetMousePosition(x, y))) {
+				if (y < m_edge_scroll_y.X) {
+					m_live_game_handler->IncrementCameraLocationX();
+				} else if (y > m_edge_scroll_y.Y) {
+					m_live_game_handler->DecrementCameraLocationX();
+				}
+			}
 		}
 	}
 }
 
 void AMyPlayerController::OnMouseScroll(float axis) {
 	if (m_in_live_game && IsValid(m_live_game_handler)) {
-		m_live_game_handler->AdjustSpringArmLength(axis);
+		m_live_game_handler->AdjustSpringArmLengthByAxis(axis);
 	}
 }
