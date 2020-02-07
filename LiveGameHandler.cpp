@@ -63,7 +63,7 @@ void ALiveGameHandler::SetLiveGameTargetOnClick() {
 	}
 }
 
-FVector ALiveGameHandler::m_delta_camera_inc_x = { 50, 0, 0 };
-FVector ALiveGameHandler::m_delta_camera_dec_x = { -50, 0, 0 };
-FVector ALiveGameHandler::m_delta_camera_inc_y = { 0, 50, 0 };
-FVector ALiveGameHandler::m_delta_camera_dec_y = { 0, -50, 0 };
+const FVector ALiveGameHandler::m_delta_camera_inc_x = { 50, 0, 0 };
+const FVector ALiveGameHandler::m_delta_camera_dec_x = { -50, 0, 0 };
+const FVector ALiveGameHandler::m_delta_camera_inc_y = { 0, 50, 0 };
+const FVector ALiveGameHandler::m_delta_camera_dec_y = { 0, -50, 0 };

@@ -32,13 +32,9 @@ public:
 	FORCEINLINE void AdjustSpringArmLengthByAxis(float axis) { m_arm_length_delta = m_zoom_factor*axis; }
 	FORCEINLINE void AdjustCameraYawByAxis(float axis) { m_mouse_rotation_delta.X = m_rotion_factor*axis; }
 	FORCEINLINE void AdjustCameraPitchByAxis(float axis) { m_mouse_rotation_delta.Y = m_rotion_factor*axis; }
-
 	FORCEINLINE void IncrementCameraLocationX() { m_spring_arm->AddRelativeLocation(m_delta_camera_inc_x); }
-
 	FORCEINLINE void IncrementCameraLocationY() { m_spring_arm->AddRelativeLocation(m_delta_camera_inc_y); }
-
 	FORCEINLINE void DecrementCameraLocationX() { m_spring_arm->AddRelativeLocation(m_delta_camera_dec_x); }
-
 	FORCEINLINE void DecrementCameraLocationY() { m_spring_arm->AddRelativeLocation(m_delta_camera_dec_y); }
 
 private:
@@ -55,10 +51,10 @@ private:
 	FVector m_mouse_location_delta;
 	float m_arm_length_delta = 0.f;
 
-	static FVector m_delta_camera_inc_x;
-	static FVector m_delta_camera_dec_x;
-	static FVector m_delta_camera_inc_y;
-	static FVector m_delta_camera_dec_y;
+	static const FVector m_delta_camera_inc_x;
+	static const FVector m_delta_camera_dec_x;
+	static const FVector m_delta_camera_inc_y;
+	static const FVector m_delta_camera_dec_y;
 
 	static constexpr uint16 m_zoom_factor = 40;
 	static constexpr uint16 m_location_factor = 10;
