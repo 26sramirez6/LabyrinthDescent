@@ -2,24 +2,30 @@
 
 #include "Target.h"
 
-// Called when the game starts or when spawned
-void ATarget::BeginPlay()
-{
+ATarget::ATarget() : m_target(ForceInitToZero) {
+	PrimaryActorTick.bCanEverTick = true;
+	bBlockInput = true;
+	SetActorEnableCollision(false);
+
+	m_base_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
+	RootComponent = m_base_mesh;
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> 
+		base_mesh_asset(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	
+	if (base_mesh_asset.Object) {
+		m_base_mesh->SetStaticMesh(base_mesh_asset.Object);
+		m_base_mesh->SetCollisionResponseToChannel(CollisionChannels::Topology, 
+			ECollisionResponse::ECR_Ignore);
+	}
+}
+
+void ATarget::BeginPlay() {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
-void ATarget::Tick(float DeltaTime)
-{
+void ATarget::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 }
-
-// Called to bind functionality to input
-//void ATarget::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-//{
-//	Super::SetupPlayerInputComponent(PlayerInputComponent);
-//
-//}
 

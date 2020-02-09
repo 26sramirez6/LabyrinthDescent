@@ -4,10 +4,13 @@
 
 AMyPlayerController::AMyPlayerController() {
 	PrimaryActorTick.bCanEverTick = true;
-	bAutoManageActiveCameraTarget = false;
 	bShowMouseCursor = true;
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
+	bHidden = true;
+	bIgnoresOriginShifting = true;
+	bLockLocation = true;
+	
 	PlayerCameraManagerClass = ALDPlayerCameraManager::StaticClass();
 	if (GEngine && GEngine->GameViewport) {
 		m_viewport = GEngine->GameViewport->Viewport;
@@ -25,6 +28,8 @@ AMyPlayerController::AMyPlayerController() {
 
 void AMyPlayerController::BeginPlay() {
 	Super::BeginPlay();
+	SetInitialLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+	SpawnLocation = FVector::ZeroVector;
 	m_live_game_handler = Cast<ALiveGameHandler>(this->GetPawn());
 	if (IsValid(m_live_game_handler)) {
 		if (IsValid(m_live_game_handler->m_camera)) {

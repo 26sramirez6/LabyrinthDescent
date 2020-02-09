@@ -25,6 +25,10 @@ public:
 	static constexpr uint16_t node_count = node_count_x * node_count_y;
 	static constexpr uint16_t connectors = Connectors;
 	static constexpr PriorityT max_weight = node_count + 1;
+	using Node = NodeT;
+	using Priority = PriorityT;
+	using Heuristic = HeuristicT;
+
 private:
 	friend class ATopologyTracer;
 	NodeT m_nodes[node_count];

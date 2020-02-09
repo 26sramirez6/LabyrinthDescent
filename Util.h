@@ -5,6 +5,10 @@
 //#include "CoreMinimal.h"
 #include <type_traits>
 #include <cstdint>
+
+#define DOUBLE2INT(i, d) \
+    {double t = ((d) + 6755399441055744.0); i = *((int *)(&t));}
+
 template<int ...I>
 struct IntSequence {};
 

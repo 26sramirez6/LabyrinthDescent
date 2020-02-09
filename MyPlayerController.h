@@ -35,8 +35,11 @@ private:
 	void Tick(float DeltaTime) override;
 
 private:
+
+	UPROPERTY(VisibleAnywhere)
 	ALiveGameHandler * m_live_game_handler;
-	ATarget * m_target;
+
+	UPROPERTY(VisibleAnywhere)
 	ALDPlayerCameraManager * m_camera_manager;
 	
 private:

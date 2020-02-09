@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "CollisionChannels.h"
 #include "Target.generated.h"
 
 // forward declared for friend
@@ -15,26 +17,7 @@ class LABYRINTHDESCENT_API ATarget : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
-	ATarget(const FObjectInitializer& ObjectInitializer) :
-		Super(ObjectInitializer), m_target(ForceInitToZero) {
-		
-		// this crashes editor
-		//for (auto it = GetWorld()->GetPlayerControllerIterator(); it; ++it) {
-		//	this->Controller = (AController *)it->Get();
-		//}		
-
-		//if (this->IsPlayerControlled()) {
-		//	UE_LOG(LogTemp, Log, TEXT("Successfully controlled"));
-		//}
-		PrimaryActorTick.bCanEverTick = true;
-
-	};
-
-private:
-	friend class ALiveGameHandler;
-	friend class AMyPlayerController;
-	FVector m_target;
+	ATarget();
 
 	void RecieveNewTarget(const FVector& _target) { 
 		this->SetActorLocation(_target, false);
@@ -50,7 +33,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+	friend class ALiveGameHandler;
+	friend class AMyPlayerController;
 
+	UPROPERTY(VisibleAnywhere)
+	FVector m_target;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent * m_base_mesh;
 };
