@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TopologyTracer.h"
+#include "Kismet/KismetMathLibrary.h"
 
-
-ATopologyTracer::ATopologyTracer {
+ATopologyTracer::ATopologyTracer() {
 	UE_LOG(LogTemp, Log, TEXT("Constructing Tracer"));
 	bBlockInput = true;
 	bHidden = true;
@@ -13,15 +13,15 @@ ATopologyTracer::ATopologyTracer {
 	m_base_graph = new Tracer::Graph();
 }
 
-ATopologyTracer::BeginPlay() override {
-	Super::BeginPlay();
-};
-
 ATopologyTracer::~ATopologyTracer() {
 	if (m_base_graph) {
 		delete m_base_graph;
 	}
 }
+
+void ATopologyTracer::BeginPlay() {
+	Super::BeginPlay();
+};
 
 void ATopologyTracer::Trace() {
 	UE_LOG(LogTemp, Log, TEXT("Performing Trace"));
@@ -88,19 +88,12 @@ void ATopologyTracer::DebugDrawGraph(float time) {
 	}
 }
 
-void ATopologyTracer::RequestPath(const FVector& _start, 
-	const FVector& _end) const {
-	std::vector<Tracer::Node * const> path(50);
+void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) const {
+	std::vector<Tracer::Node const *> path;
+	path.reserve(m_path_size_reservation);
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
-	_start
-		AStar<Tracer::Graph>::Search(*m_base_graph, start, end, path);
-}
-
-FORCEINLINE Tracer::Node const * const
-ATopologyTracer::GetNearestNode(const FVector& _target) const {
-	FVector translated_target = _target / m_node_scaling;
-	translated_target
+	AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
 }
 
 const FVector ATopologyTracer::m_node_scaling = {

@@ -9,10 +9,13 @@
 #include "CoreMinimal.h"
 
 
-class ATopologyTracer; //forward
+class ATopologyTracer;
+
+template<class GraphT>
+class AStar;
 
 template<typename NodeT, typename PriorityT, typename HeuristicT,
-	typename DimensionsT, unsigned Connectors,
+	typename DimensionsT, uint16_t Connectors,
 VALIDATE(IsGraphNode, NodeT)=0,
 VALIDATE(std::is_arithmetic, PriorityT)=0,
 VALIDATE(IsHeuristic, HeuristicT)=0,
@@ -29,23 +32,16 @@ public:
 	using Priority = PriorityT;
 	using Heuristic = HeuristicT;
 
-private:
-	friend class ATopologyTracer;
-	NodeT m_nodes[node_count];
-	NodeT * m_connectors[node_count*Connectors];
-	PriorityT m_weights[node_count*Connectors];
-	HeuristicT m_heuristic;
-
 public:
 	GridGraph() { InitializeData(); };
 
 	~GridGraph() {};
 
-	FORCEINLINE NodeT* const * GetConnectors(const NodeT& _current) const {
-		return &m_connectors[_current.id*Connectors];
+	FORCEINLINE NodeT const * const * GetConnectors(NodeT const * _current) const {
+		return &m_connectors[_current->id*Connectors];
 	}
 
-	FORCEINLINE PriorityT Heuristic(NodeT const * _current, NodeT const * _next) const {
+	FORCEINLINE PriorityT CalcHeuristic(NodeT const * _current, NodeT const * _next) const {
 		return m_heuristic.calc(_current, _next);
 	}
 
@@ -84,7 +80,16 @@ private:
 			}
 		}
 	}
+
+private:
+	friend class ATopologyTracer;
+	friend class AStar< GridGraph<NodeT, PriorityT, HeuristicT, DimensionsT, Connectors> >;
+	NodeT m_nodes[node_count];
+	NodeT * m_connectors[node_count*Connectors];
+	PriorityT m_weights[node_count*Connectors];
+	HeuristicT m_heuristic;
 };
 
 template<typename T> struct IsGraph : std::integral_constant<bool, false> {};
+//template<template<typename...> class T, typename ...U> struct IsGraph<T<U...>> : std::integral_constant<bool, false> {};
 template<typename ...T> struct IsGraph<GridGraph<T...>> : std::integral_constant<bool, true> {};

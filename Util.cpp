@@ -1,4 +1,5 @@
 #include "Util.h"
+#include <iostream>
 
 template<class Center, 
 VALIDATE(IsVector3, Center)=0>
@@ -59,5 +60,6 @@ int main() {
 	static_assert(IntAtIndex<1, b>::value == 100, "");
 	static_assert(IntAtIndex<2, b>::value == 144, "");
 	static_assert(b::x == 64, "");
+
 	return 0;
 }

@@ -4,7 +4,7 @@
 
 template<typename NodeT>
 struct Manhattan {
-	FORCEINLINE int16_t calc(NodeT* current, NodeT* next) const {
+	FORCEINLINE int16_t calc(NodeT const * current, NodeT const * next) const {
 		return std::abs(current->x - next->x) +
 			std::abs(current->y - next->y) +
 			std::abs(current->z - next->z);

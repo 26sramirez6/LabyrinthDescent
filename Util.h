@@ -9,6 +9,15 @@
 #define DOUBLE2INT(i, d) \
     {double t = ((d) + 6755399441055744.0); i = *((int *)(&t));}
 
+//inline uint16_t RoundU16(float a) {
+//	uint16_t retval;
+//
+//	__asm fld a
+//	__asm fistp retval
+//
+//	return retval;
+//}
+
 template<int ...I>
 struct IntSequence {};
 
