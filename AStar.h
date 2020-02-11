@@ -4,6 +4,7 @@
 #include <queue>
 #include <functional>
 #include <algorithm>
+#include <cassert>
 #include "CoreMinimal.h"
 #include "Util.h"
 #include "GridGraph.h"
@@ -37,27 +38,34 @@ public:
 		Priority costs[GraphT::node_count] = { 0 };
 		uint16_t parents[GraphT::node_count] = { 0 };
 		Node const * current;
+		uint16_t const _end_id = _end->id;
 		while (!frontier.empty()) {
 			current = frontier.top().second;
-			const uint16 current_id = current->id;
+			const uint16 _current_id = current->id;
 			frontier.pop();
 
-			if (current == _end) {
+			if (UNLIKELY(_current_id == _end_id)) {
 				break;
 			}
 
 			Node const * const * connectors = _graph->GetConnectors(current);
-			for (uint16_t i = 0; i < GraphT::connectors; i++, connectors++) {
-				Node const * const next = *connectors;
-				const uint16 next_id = next->id;
-				Priority cost_to_next = costs[next_id] + _graph->EdgeWeight(current, next);
+			for (uint16_t i = 0; i < GraphT::connectors; i++) {
+				Node const * const next = connectors[i];
+				if (LIKELY(next)) {
+					const uint16 next_id = next->id;
+					//ensureAlwaysMsgf(next_id < GraphT::node_count, TEXT("nextid (%d) less than node count (%d)"), next_id, GraphT::node_count);
+					//assert(next_id < GraphT::node_count);
+					Priority cost_to_next = costs[next_id] + _graph->EdgeWeight(current, next);
 
-				if (!visited[next_id] || cost_to_next < costs[next_id]) {
-					costs[next_id] = cost_to_next;
-					Priority estimated_cost_to_goal = cost_to_next + _graph->CalcHeuristic(current, next);
-					frontier.emplace(estimated_cost_to_goal, next);
-					parents[next_id] = current_id;
-					visited[next_id] = true;
+					if ((!visited[next_id] || cost_to_next < costs[next_id]) &&
+						next->is_reachable &&
+						!next->is_edge) {
+						costs[next_id] = cost_to_next;
+						Priority estimated_cost_to_goal = cost_to_next + _graph->CalcHeuristic(current, next);
+						frontier.emplace(estimated_cost_to_goal, next);
+						parents[next_id] = _current_id;
+						visited[next_id] = true;
+					}
 				}
 			}
 		}

@@ -38,8 +38,8 @@ struct TopologyTracer {
 	static constexpr uint16_t node_count_x = NodeDims::x;
 	static constexpr uint16_t node_count_y = NodeDims::y;
 	static constexpr uint16_t node_count = node_count_x * node_count_y;
-	static constexpr uint16_t top_z = Center::z + Bounds::z;
-	static constexpr uint16_t bot_z = Center::z - Bounds::z;
+	static constexpr int16_t top_z = Center::z + Bounds::z;
+	static constexpr int16_t bot_z = Center::z - Bounds::z;
 	using TopLeftPoint = typename VectorAddLD<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
 	using BottomLeftPoint = typename VectorSub<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
 };
@@ -63,9 +63,9 @@ public:
 	ATopologyTracer();
 	~ATopologyTracer();
 	void Trace();
-	void DebugDrawGraph(float time);
+	void DebugDrawGraph(const float _time) const;
 	void RequestPath(const FVector& _start, const FVector& _end) const;
-
+	void DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const;
 	FORCEINLINE Tracer::Node const * const GetNearestNode(const FVector& _target) const {
 		uint16_t node_id = static_cast<uint16_t>(
 			((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y) * Tracer::node_count_x +

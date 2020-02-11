@@ -46,7 +46,7 @@ public:
 	}
 
 	FORCEINLINE PriorityT EdgeWeight(NodeT const * _current, NodeT const * _neighbor) const {
-		return m_weights[_current->id + _neighbor->id % Connectors];
+		return 1;//m_weights[_current->id*Connectors + _neighbor->id % Connectors];
 	}
 
 private:
@@ -77,6 +77,18 @@ private:
 					nullptr : &m_nodes[node_id + node_count_x];
 				m_connectors[current + 7] = (i == node_count_y - 1 || j == node_count_x - 1) ?
 					nullptr : &m_nodes[node_id + node_count_x + 1];
+
+				m_nodes[node_id].is_edge = (
+					i == 0 || 
+					j == 0 || 
+					i == node_count_y - 1 ||  
+					j == node_count_x - 1);
+
+				m_nodes[node_id].is_corner = (
+					(i == 0 && j == 0) || 
+					(i == 0 && j == node_count_x - 1) ||
+					(i == node_count_y - 1 && j == 0) ||
+					(i == node_count_y - 1 && j == node_count_x - 1));
 			}
 		}
 	}

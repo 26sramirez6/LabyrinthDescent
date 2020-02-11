@@ -39,6 +39,7 @@ void ATopologyTracer::Trace() {
 			const FVector _start(_x, _y, Tracer::top_z);
 			const FVector _end(_x, _y, Tracer::bot_z);
 			current = &m_base_graph->m_nodes[id];
+			current->is_reachable = true;
 			if (world->LineTraceSingleByChannel(
 				out_hit,
 				_start,
@@ -48,11 +49,11 @@ void ATopologyTracer::Trace() {
 				_response)) {
 				// float->int16. pros/cons of keeping in int16 vs float
 				current->SetLocation(_x, _y, out_hit.Location.Z);
-				current->is_reachable = true;
-				_color = FColor::Red;
+				current->is_off_topology = false;
+				//_color = FColor::Red;
 			} else {
-				current->SetLocation(_x, _y, 20);
-				current->is_reachable = false;
+				current->SetLocation(_x, _y, 50);
+				current->is_off_topology = true;
 				_color = FColor::Blue;
 			};
 			FVector point;
@@ -64,7 +65,7 @@ void ATopologyTracer::Trace() {
 	}
 }
 
-void ATopologyTracer::DebugDrawGraph(float time) {
+void ATopologyTracer::DebugDrawGraph(const float _time) const {
 	UWorld * world = GetWorld();
 	if (IsValid(world)) {
 		FVector start, end;
@@ -73,15 +74,15 @@ void ATopologyTracer::DebugDrawGraph(float time) {
 			Tracer::Node * next = m_base_graph->m_connectors[i];
 			current = &m_base_graph->m_nodes[i];
 			current->ToVector(start);
-			DrawDebugPoint(world, start, 5.f, current->is_reachable ? FColor::Red : FColor::Blue, false, time);
-			//UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s"), current->id, current, *start.ToString());
+			DrawDebugPoint(world, start, 5.f, current->is_reachable ? FColor::Red : FColor::Blue, false, _time);
+			//UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s, reachable?: %d"), current->id, current, *start.ToString(), current->is_reachable);
 
 			const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
 			for (uint16_t j = 0; j < Tracer::Graph::connectors; j++) {
 				Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
 				if (next) {
 					next->ToVector(end);
-					DrawDebugLine(world, start, end, current->is_reachable ? FColor::Blue : FColor::Blue, false, time, 0, .5f);
+					DrawDebugLine(world, start, end, current->is_reachable ? FColor::Red : FColor::Blue, false, _time, 0, .5f);
 				}
 			}
 		}
@@ -94,6 +95,22 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
 	AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
+	UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"), 
+		*_start.ToString(), *_end.ToString(), path.size());
+
+	DebugDrawPath(path, 100.f);
+}
+
+void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const {
+	UWorld * world = GetWorld();
+	FVector start, end;
+	for (uint16_t i = 0; i < _path.size() - 1; ++i) {
+		_path[i]->ToVector(start);
+		_path[i+1]->ToVector(end);
+		//UE_LOG(LogTemp, Log, TEXT("location: %s"), *start.ToString());
+		UE_LOG(LogTemp, Log, TEXT("node %d on path, id: %d, location: %s"), i, _path[i]->id, *start.ToString());
+		DrawDebugLine(world, start, end, FColor::Green, true, _time, 0, 5.f);
+	}
 }
 
 const FVector ATopologyTracer::m_node_scaling = {

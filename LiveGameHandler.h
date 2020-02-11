@@ -76,6 +76,6 @@ private:
 	static const FRotator m_spring_arm_start_rotator;
 
 	static constexpr uint16 m_zoom_factor = 40;
-	static constexpr uint16 m_location_factor = 10;
+	static constexpr uint16 m_location_factor = 5;
 	static constexpr uint16 m_rotion_factor = 1;
 };
