@@ -25,12 +25,51 @@ public:
 	using Priority = typename GraphT::Priority;
 	using Qitem = std::pair<typename Priority, typename Node const *>;
 
+private:
+    template<typename Enabled>
+    struct WaveHandle;
+
+    template<>
+    struct WaveHandle<std::true_type> {
+        FORCEINLINE static void
+        AddToWave(Node const * node) { wave.push_back(node); }
+
+        FORCEINLINE static void
+        DebugDrawWave(const std::vector<Node const *> &_wave, UWorld const * const _world) {
+            FVector point;
+            for (auto node : wave) {
+                node->ToVector(point);
+                DrawDebugPoint(_world, point, 5.f, FColor::Blue, false, 5.f);
+            }
+        }
+
+        std::vector<Priority> m_wave;
+    }
+
+    template<>
+    struct WaveHandle<std::false_type> {
+        FORCEINLINE static void
+        AddToWave(Node const *) { return; }
+
+        FORCEINLINE static void
+        DebugDrawWave(const std::vector<Node const *> &, UWorld const * const) { return; }
+   }
+
 	static void Search(
 		GraphT const * _graph, 
 		Node const * const _start,
 		Node const * const _end,
-		UWorld * const _world,
-		std::vector<Node const *>& path_) {
+		std::vector<Node const *>& path_,
+        UWorld const * const _world=nullptr) {
+
+
+public:
+	static void Search(
+		GraphT const * _graph, 
+		Node const * const _start,
+		Node const * const _end,
+		std::vector<Node const *>& path_,
+        UWorld const * const _world=nullptr) {
 
 		std::priority_queue<Qitem, std::deque<Qitem>,
 			std::greater<Qitem>> frontier;
