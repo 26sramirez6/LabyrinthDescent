@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TopologyTracer.h"
-#include "Kismet/KismetMathLibrary.h"
 
 ATopologyTracer::ATopologyTracer() {
 	UE_LOG(LogTemp, Log, TEXT("Constructing Tracer"));
@@ -39,7 +38,7 @@ void ATopologyTracer::Trace() {
 			const FVector _start(_x, _y, Tracer::top_z);
 			const FVector _end(_x, _y, Tracer::bot_z);
 			current = &m_base_graph->m_nodes[id];
-			current->is_reachable = true;
+			current->is_off_topology = false;
 			if (world->LineTraceSingleByChannel(
 				out_hit,
 				_start,
@@ -49,8 +48,8 @@ void ATopologyTracer::Trace() {
 				_response)) {
 				// float->int16. pros/cons of keeping in int16 vs float
 				current->SetLocation(_x, _y, out_hit.Location.Z);
-				current->is_off_topology = false;
-				//_color = FColor::Red;
+				current->is_reachable = out_hit.Location.Z < Tracer::max_reachable_elevation;
+				_color = FColor::Red;
 			} else {
 				current->SetLocation(_x, _y, 50);
 				current->is_off_topology = true;
@@ -93,37 +92,11 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	std::vector<Tracer::Node const *> path;
 	path.reserve(m_path_size_reservation);
 	Tracer::Node const * const start = GetNearestNode(_start);
-	UE_LOG(LogTemp, Log, TEXT("received id: %d pointer %p"), start->id, start);
 	Tracer::Node const * const end = GetNearestNode(_end);
-	UE_LOG(LogTemp, Log, TEXT("received id: %d pointer %p"), end->id, end);
-
-	FVector start_vec, end_vec, zero_vec;
-	
-	start->ToVector(start_vec);
-	end->ToVector(end_vec);
-
-	DrawDebugPoint(GetWorld(), start_vec, 5.f, FColor::Red, true, 100.f, SDPG_MAX);
-	DrawDebugPoint(GetWorld(), end_vec, 5.f, FColor::Red, true, 100.f, SDPG_MAX);
-	for (int i = 0; i < 200; i++) {
-		m_base_graph->m_nodes[i].ToVector(zero_vec);
-		FColor color;
-		if (i == 0) {
-			color = FColor::Green;
-		} else if (i < 100) {
-			color = FColor::Blue;
-		} else {
-			color = FColor::Red;
-		}
-		//UE_LOG(LogTemp, Log, TEXT("node %d, location: %s"), i, *zero_vec.ToString());
-		DrawDebugPoint(GetWorld(), zero_vec, 5.f, color, true, 100.f, SDPG_MAX);
-	}
-	UE_LOG(LogTemp, Log, TEXT("Start node id: %d, End node id: %d"), start->id, end->id);
-
-	//AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
-	//UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"), 
-	//	*_start.ToString(), *_end.ToString(), path.size());
-
-	//DebugDrawPath(path, 100.f);
+	AStar<Tracer::Graph>::Search(m_base_graph, start, end, GetWorld(), path);
+	UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"), 
+		*_start.ToString(), *_end.ToString(), path.size());
+	DebugDrawPath(path, 5.f);
 }
 
 void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const {
@@ -132,7 +105,6 @@ void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _pa
 	for (uint16_t i = 0; i < _path.size() - 1; ++i) {
 		_path[i]->ToVector(start);
 		_path[i+1]->ToVector(end);
-		//UE_LOG(LogTemp, Log, TEXT("location: %s"), *start.ToString());
 		UE_LOG(LogTemp, Log, TEXT("node %d on path, id: %d, location: %s"), i, _path[i]->id, *start.ToString());
 		DrawDebugLine(world, start, end, FColor::Green, true, _time, 0, 5.f);
 	}

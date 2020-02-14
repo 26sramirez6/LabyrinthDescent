@@ -6,9 +6,10 @@
 #include <algorithm>
 #include <cassert>
 #include "CoreMinimal.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
 #include "Util.h"
 #include "GridGraph.h"
-
 
 
 template<class GraphT>
@@ -24,9 +25,11 @@ public:
 	using Priority = typename GraphT::Priority;
 	using Qitem = std::pair<typename Priority, typename Node const *>;
 
-	static void Search(GraphT const * _graph, 
+	static void Search(
+		GraphT const * _graph, 
 		Node const * const _start,
 		Node const * const _end,
+		UWorld * const _world,
 		std::vector<Node const *>& path_) {
 
 		std::priority_queue<Qitem, std::deque<Qitem>,
@@ -39,6 +42,7 @@ public:
 		uint16_t parents[GraphT::node_count] = { 0 };
 		Node const * current;
 		uint16_t const _end_id = _end->id;
+		std::vector<Node const *> wave;
 		while (!frontier.empty()) {
 			current = frontier.top().second;
 			const uint16 _current_id = current->id;
@@ -49,25 +53,33 @@ public:
 			}
 
 			Node const * const * connectors = _graph->GetConnectors(current);
+			
+			wave.push_back(current);
 			for (uint16_t i = 0; i < GraphT::connectors; i++) {
 				Node const * const next = connectors[i];
 				if (LIKELY(next)) {
 					const uint16 next_id = next->id;
-					//ensureAlwaysMsgf(next_id < GraphT::node_count, TEXT("nextid (%d) less than node count (%d)"), next_id, GraphT::node_count);
-					//assert(next_id < GraphT::node_count);
-					Priority cost_to_next = costs[next_id] + _graph->EdgeWeight(current, next);
+					Priority cost_to_next = costs[_current_id] + _graph->EdgeWeight(current, next);
 
 					if ((!visited[next_id] || cost_to_next < costs[next_id]) &&
 						next->is_reachable &&
 						!next->is_edge) {
 						costs[next_id] = cost_to_next;
-						Priority estimated_cost_to_goal = cost_to_next + _graph->CalcHeuristic(current, next);
+						Priority estimated_cost_to_goal = cost_to_next + _graph->CalcHeuristic(next, _end);
 						frontier.emplace(estimated_cost_to_goal, next);
 						parents[next_id] = _current_id;
 						visited[next_id] = true;
+						wave.push_back(next);
 					}
 				}
 			}
+
+			for (auto item : wave) {
+				FVector point;
+				item->ToVector(point);
+				DrawDebugPoint(_world, point, 5.f, FColor::Blue, false, 5.f);
+			}
+			wave.clear();
 		}
 		
 		path_.emplace_back(_end);

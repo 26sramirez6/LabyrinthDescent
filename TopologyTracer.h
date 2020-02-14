@@ -19,7 +19,8 @@
 #include "TopologyTracer.generated.h"
 
 template<class NodeT, typename PriorityT, class CenterVector, 
-	class BoundsVector, class ScaleVector, class HeuristicT, uint16_t Connectors,
+	class BoundsVector, class ScaleVector, class HeuristicT, 
+	uint16_t Connectors, uint16_t MaxReachableElevation,
 	VALIDATE(IsGraphNode, NodeT)=0,
 	VALIDATE(IsVector3, CenterVector)=0,
 	VALIDATE(IsVector3, BoundsVector)=0,
@@ -33,7 +34,7 @@ struct TopologyTracer {
 	using NodeDims = typename ScalarMul<Bounds, 2>::type;
 	using Scale = ScaleVector;
 	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, NodeDims, Connectors>;
-	
+	static constexpr uint16_t max_reachable_elevation = MaxReachableElevation;
 	static constexpr uint16_t connectors = Connectors;
 	static constexpr uint16_t node_count_x = NodeDims::x;
 	static constexpr uint16_t node_count_y = NodeDims::y;
@@ -52,13 +53,14 @@ class LABYRINTHDESCENT_API ATopologyTracer : public AActor {
 
 public:
 	using Tracer = TopologyTracer<
-		GridNode, // node type
-		uint16_t, // priority type
-		Vector3<0, 0, 0>,  // center
-		Vector3<50, 50, 200>, // bounds
-		Vector3<10, 10, 1>, // scale
-		Manhattan<GridNode>,  // heuristic
-		8>; // connectors
+		GridNode,				// node type
+		uint16_t,				// priority type
+		Vector3<0, 0, 0>,		// center
+		Vector3<50, 50, 200>,	// bounds
+		Vector3<10, 10, 1>,		// scale
+		Manhattan<GridNode>,	// heuristic
+		8,						// connectors
+		10>;					// max reachable elevation 
 
 	ATopologyTracer();
 	~ATopologyTracer();
@@ -68,17 +70,10 @@ public:
 	void DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const;
 
 	FORCEINLINE Tracer::Node const * const GetNearestNode(const FVector& _target) const {
-		UE_LOG(LogTemp, Log, TEXT("Getting node id for target %s"), *_target.ToString());
-		UE_LOG(LogTemp, Log, TEXT("nodes filled : %f"),
-			((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y) * Tracer::node_count_x);
-
-		UE_LOG(LogTemp, Log, TEXT("nodes to add : %f"), (_target.X - Tracer::BottomLeftPoint::x) / m_node_scaling.X);
-		//UE_LOG(LogTemp, Log, TEXT("%f"), ((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y) * Tracer::node_count_x));
 		uint16_t node_id = static_cast<uint16_t>(
-			((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y) * Tracer::node_count_x +
+			(static_cast<uint16_t>((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y)) * Tracer::node_count_x +
 			(_target.X - Tracer::BottomLeftPoint::x) / m_node_scaling.X
 		);
-		UE_LOG(LogTemp, Log, TEXT("returning node %d pointer %p"), node_id, &m_base_graph->m_nodes[node_id]);
 		return &m_base_graph->m_nodes[node_id];
 	};
 
