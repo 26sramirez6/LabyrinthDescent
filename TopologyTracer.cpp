@@ -93,7 +93,7 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	path.reserve(m_path_size_reservation);
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
-	AStar<Tracer::Graph>::Search(m_base_graph, start, end, GetWorld(), path);
+	AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
 	UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"), 
 		*_start.ToString(), *_end.ToString(), path.size());
 	DebugDrawPath(path, 5.f);

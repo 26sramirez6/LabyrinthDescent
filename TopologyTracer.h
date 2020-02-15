@@ -58,7 +58,7 @@ public:
 		Vector3<0, 0, 0>,		// center
 		Vector3<50, 50, 200>,	// bounds
 		Vector3<10, 10, 1>,		// scale
-		Chebyshev<GridNode>,	// heuristic
+		Octile<GridNode>,		// heuristic
 		8,						// connectors
 		10>;					// max reachable elevation 
 

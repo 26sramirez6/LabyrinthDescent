@@ -4,6 +4,7 @@
 #include <queue>
 #include <functional>
 #include <algorithm>
+#include <type_traits>
 #include <cassert>
 #include "CoreMinimal.h"
 #include "Engine/World.h"
@@ -13,10 +14,9 @@
 
 
 template<class GraphT>
-class LABYRINTHDESCENT_API AStar
-{
-//private:
-//	using _throw = VALIDATE(IsGraph, GraphT);
+class LABYRINTHDESCENT_API AStar {
+	//private:
+	//	using _throw = VALIDATE(IsGraph, GraphT);
 public:
 	AStar() {};
 	~AStar() {};
@@ -26,62 +26,78 @@ public:
 	using Qitem = std::pair<typename Priority, typename Node const *>;
 
 private:
-    template<typename Enabled>
-    struct WaveHandle;
+	template<typename Enabled>
+	struct WaveHandle;
 
-    template<>
-    struct WaveHandle<std::true_type> {
-        FORCEINLINE static void
-        AddToWave(Node const * node) { wave.push_back(node); }
+	template<>
+	struct WaveHandle<std::true_type> {
+		FORCEINLINE void
+		AddToWave(Node const * node) { m_wave.push_back(node); }
 
-        FORCEINLINE static void
-        DebugDrawWave(const std::vector<Node const *> &_wave, UWorld const * const _world) {
-            FVector point;
-            for (auto node : wave) {
-                node->ToVector(point);
-                DrawDebugPoint(_world, point, 5.f, FColor::Blue, false, 5.f);
-            }
-        }
+		FORCEINLINE void
+		DebugDrawWave(UWorld const * const _world) const {
+			FVector point;
+			for (auto node : m_wave) {
+				node->ToVector(point);
+				DrawDebugPoint(_world, point, 5.f, FColor::Blue, false, 5.f);
+			}
+		}
+		std::vector<Node const *> m_wave;
+	};
 
-        std::vector<Priority> m_wave;
-    }
+	template<>
+	struct WaveHandle<std::false_type> {
+		FORCEINLINE static void
+		AddToWave(Node const *) { return; }
 
-    template<>
-    struct WaveHandle<std::false_type> {
-        FORCEINLINE static void
-        AddToWave(Node const *) { return; }
-
-        FORCEINLINE static void
-        DebugDrawWave(const std::vector<Node const *> &, UWorld const * const) { return; }
-   }
-
-	static void Search(
-		GraphT const * _graph, 
-		Node const * const _start,
-		Node const * const _end,
-		std::vector<Node const *>& path_,
-        UWorld const * const _world=nullptr) {
-
+		FORCEINLINE static void
+		DebugDrawWave(UWorld const * const) { return; }
+	};
 
 public:
-	static void Search(
-		GraphT const * _graph, 
+	FORCEINLINE static void
+	Search(
+		GraphT const * _graph,
+		Node const * const _start,
+		Node const * const _end,
+		std::vector<Node const *>& path_) {
+
+		SearchImp<std::false_type>(_graph, _start, _end, path_, nullptr);
+	}
+
+	FORCEINLINE static void
+	Search(
+		GraphT const * _graph,
 		Node const * const _start,
 		Node const * const _end,
 		std::vector<Node const *>& path_,
-        UWorld const * const _world=nullptr) {
+		UWorld const * const _world) {
+
+		SearchImp<std::true_type>(_graph, _start, _end, path_, _world);
+	}
+
+private:
+
+	template<typename WaveEnabled>
+	static void SearchImp(
+		GraphT const * _graph,
+		Node const * const _start,
+		Node const * const _end,
+		std::vector<Node const *>& path_,
+		UWorld const * const _world = nullptr) {
 
 		std::priority_queue<Qitem, std::deque<Qitem>,
 			std::greater<Qitem>> frontier;
+
+		WaveHandle<WaveEnabled> wave;
 		frontier.emplace(0, _start);
-		
+
 		// move to a map? a lot of stack allocation for a call
 		bool visited[GraphT::node_count] = { false };
 		Priority costs[GraphT::node_count] = { 0 };
 		uint16_t parents[GraphT::node_count] = { 0 };
 		Node const * current;
 		uint16_t const _end_id = _end->id;
-		std::vector<Node const *> wave;
 		while (!frontier.empty()) {
 			current = frontier.top().second;
 			const uint16 _current_id = current->id;
@@ -92,8 +108,8 @@ public:
 			}
 
 			Node const * const * connectors = _graph->GetConnectors(current);
-			
-			wave.push_back(current);
+
+			wave.AddToWave(current);
 			for (uint16_t i = 0; i < GraphT::connectors; i++) {
 				Node const * const next = connectors[i];
 				if (LIKELY(next)) {
@@ -108,19 +124,12 @@ public:
 						frontier.emplace(estimated_cost_to_goal, next);
 						parents[next_id] = _current_id;
 						visited[next_id] = true;
-						wave.push_back(next);
+						wave.AddToWave(next);
 					}
 				}
 			}
-
-			for (auto item : wave) {
-				FVector point;
-				item->ToVector(point);
-				DrawDebugPoint(_world, point, 5.f, FColor::Blue, false, 5.f);
-			}
-			wave.clear();
 		}
-		
+		wave.DebugDrawWave(_world);
 		path_.emplace_back(_end);
 		uint16_t current_id = parents[_end->id];
 		uint16_t start_id = _start->id;

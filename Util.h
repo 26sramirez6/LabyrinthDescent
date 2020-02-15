@@ -5,6 +5,7 @@
 //#include "CoreMinimal.h"
 #include <type_traits>
 #include <cstdint>
+#include <limits>
 
 #define DOUBLE2INT(i, d) \
     {double t = ((d) + 6755399441055744.0); i = *((int *)(&t));}
@@ -260,12 +261,26 @@ template<class Sequence1, class Sequence2,
 #define MID ((lo + hi + 1) / 2)
 
 constexpr uint64_t
-	SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
+SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
 	return lo == hi ? lo : ((x / MID < MID)
 		? SqrtHelper(x, lo, MID - 1) : SqrtHelper(x, MID, hi));
 }
 
 constexpr uint64_t
-	CompileTimeSqrt(uint64_t x) {
+CompileTimeSqrt(uint64_t x) {
 	return SqrtHelper(x, 0, x / 2 + 1);
+}
+
+constexpr double
+SqrtNewtonRaphson(double x, double curr, double prev) {
+	return curr == prev
+		? curr
+		: SqrtNewtonRaphson(x, 0.5 * (curr + x / curr), curr);
+}
+
+constexpr double
+CompileTimeSqrt(double x) {
+	return x >= 0 && x < std::numeric_limits<double>::infinity()
+		? SqrtNewtonRaphson(x, x, 0)
+		: std::numeric_limits<double>::quiet_NaN();
 }
