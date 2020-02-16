@@ -1,5 +1,25 @@
 #include "Util.h"
 #include <iostream>
+#include <cstdint>
+#include <limits>
+
+struct Node {
+//bool a, b, c, d;
+enum sizes {
+as = 1,
+bs = 1,
+vs = 32
+};
+
+uint16_t a: 1;//sizes::as;
+uint16_t b: 1;//sizes::bs;
+uint32_t v: 32;//sizes::vs;
+uint16_t id;
+int16_t x,y,z;
+uint16_t zone;
+};
+
+
 
 template<class Center, 
 VALIDATE(IsVector3, Center)=0>
@@ -16,6 +36,16 @@ template<class S1, class S2,
 
 
 int main() {
+	std::cout << sizeof (Node) << std::endl;
+	Node n;
+	uint16_t count = 1 << 4;
+	std::cout << count << std::endl;
+	//std::cout << sizes::as << std::endl;
+	//std::cout << sizes::bs << std::endl;
+
+//	std::cout << n.g << n.a << n.b << n.c << n.d << std::endl;
+	//std::cout << std::numeric_limits<uint8_t>::max() << std::endl;
+	//std::cout << sizeof(Node::v) << std::endl;
 	constexpr bool t1 = IntSequence<1,2,3,7,4>::max==7;
 	static_assert(t1, "t1 fail");
 

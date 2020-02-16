@@ -31,16 +31,35 @@ struct TopologyTracer {
 	using Priority = PriorityT;
 	using Center = CenterVector;
 	using Bounds = BoundsVector;
-	using NodeDims = typename ScalarMul<Bounds, 2>::type;
+	using GraphDims_NU = typename ScalarMul<Bounds, 2>::type;
+	using GraphDims_WU = typename VectorMul<GraphDims_NU, ScaleVector>::type;
+	
 	using Scale = ScaleVector;
-	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, NodeDims, Connectors>;
+	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, GraphDims_NU, Connectors>;
 	static constexpr uint16_t max_reachable_elevation = MaxReachableElevation;
 	static constexpr uint16_t connectors = Connectors;
-	static constexpr uint16_t node_count_x = NodeDims::x;
-	static constexpr uint16_t node_count_y = NodeDims::y;
+
+	static constexpr uint16_t node_count_x = GraphDims_NU::x;
+	static constexpr uint16_t node_count_y = GraphDims_NU::y;
+	
 	static constexpr uint16_t node_count = node_count_x * node_count_y;
+
+	static constexpr uint16_t zone_count = 1 << NodeT::BitFieldSizes::ZONE_ID;
+	static constexpr uint16_t zone_count_sqrt = 1 << (NodeT::BitFieldSizes::ZONE_ID - 1);
+
+	static_assert(
+		GraphDims_NU::x % zone_count_sqrt == 0 &&
+		GraphDims_NU::y % zone_count_sqrt == 0 &&
+		GraphDims_NU::z % zone_count_sqrt == 0 && ,
+		"Incompatible node dimensions and zone count specification");
+
+	using ZoneDims_NU = ScalarDiv<GraphDims_NU, zone_count_sqrt>::type;
+
+	static constexpr uint16_t zone_node_count_x = 1 << NodeT::BitFieldSizes::ZONE_ID;
 	static constexpr int16_t top_z = Center::z + Bounds::z;
 	static constexpr int16_t bot_z = Center::z - Bounds::z;
+	
+
 	using TopLeftPoint = typename VectorAddLD<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
 	using BottomLeftPoint = typename VectorSub<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
 };
@@ -56,8 +75,8 @@ public:
 		GridNode,				// node type
 		uint16_t,				// priority type
 		Vector3<0, 0, 0>,		// center
-		Vector3<50, 50, 200>,	// bounds
-		Vector3<10, 10, 1>,		// scale
+		Vector3<64, 64, 200>,	// bounds
+		Vector3<32, 32, 1>,		// scale
 		Octile<GridNode>,		// heuristic
 		8,						// connectors
 		10>;					// max reachable elevation 

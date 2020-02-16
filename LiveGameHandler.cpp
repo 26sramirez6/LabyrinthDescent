@@ -31,6 +31,7 @@ ALiveGameHandler::ALiveGameHandler() :
 		m_target = world->SpawnActor<ATarget>();
 		m_user_character = world->SpawnActor<AUserCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
 		m_topo = world->SpawnActor<ATopologyTracer>();
+		m_mobs = world->SpawnActor<AMob>();
 		m_topo->Trace();
 		//m_topo->DebugDrawGraph(100.f);
 	}

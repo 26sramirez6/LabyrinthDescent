@@ -93,6 +93,51 @@ private:
 		}
 	}
 
+	void InitializeData() {
+		for (uint16_t z = 0; z < zone_count; z++) {
+			for (uint16_t i = 0; i < zone_node_count_y; i++) {
+				for (uint16_t j = 0; j < zone_node_count_x; j++) {
+					const uint16_t node_id = i * node_count_x + j;
+					m_nodes[node_id].id = node_id;
+					const uint32_t current = node_id * Connectors;
+					// bot
+					m_connectors[current] = (i == 0 || j == 0) ?
+						nullptr : &m_nodes[node_id - node_count_x - 1];
+					m_connectors[current + 1] = (i == 0) ?
+						nullptr : &m_nodes[node_id - node_count_x];
+					m_connectors[current + 2] = (i == 0 || j == node_count_x - 1) ?
+						nullptr : &m_nodes[node_id - node_count_x + 1];
+
+					// mid
+					m_connectors[current + 3] = (j == 0) ?
+						nullptr : &m_nodes[node_id - 1];
+					m_connectors[current + 4] = (j == node_count_x - 1) ?
+						nullptr : &m_nodes[node_id + 1];
+
+					// top
+					m_connectors[current + 5] = (i == node_count_y - 1 || j == 0) ?
+						nullptr : &m_nodes[node_id + node_count_x - 1];
+					m_connectors[current + 6] = (i == node_count_y - 1) ?
+						nullptr : &m_nodes[node_id + node_count_x];
+					m_connectors[current + 7] = (i == node_count_y - 1 || j == node_count_x - 1) ?
+						nullptr : &m_nodes[node_id + node_count_x + 1];
+
+					m_nodes[node_id].is_edge = (
+						i == 0 ||
+						j == 0 ||
+						i == node_count_y - 1 ||
+						j == node_count_x - 1);
+
+					m_nodes[node_id].is_corner = (
+						(i == 0 && j == 0) ||
+						(i == 0 && j == node_count_x - 1) ||
+						(i == node_count_y - 1 && j == 0) ||
+						(i == node_count_y - 1 && j == node_count_x - 1));
+				}
+			}
+		}
+	}
+
 private:
 	friend class ATopologyTracer;
 	friend class AStar< GridGraph<NodeT, PriorityT, HeuristicT, DimensionsT, Connectors> >;

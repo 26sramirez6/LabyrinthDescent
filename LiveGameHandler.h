@@ -8,6 +8,7 @@
 #include "Target.h"
 #include "UserCharacter.h"
 #include "AStar.h"
+#include "Mob.h"
 #include "TopologyTracer.h"
 #include "MyCamera.h"
 #include "LiveGameHandler.generated.h"
@@ -60,6 +61,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* m_base_mesh;
+
+	AMob* m_mobs;
 
  	FVector2D m_mouse_rotation_delta;
 	FVector m_mouse_location_delta;
