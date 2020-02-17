@@ -18,50 +18,60 @@
 #include "Node.h"
 #include "TopologyTracer.generated.h"
 
-template<class NodeT, typename PriorityT, class CenterVector, 
-	class BoundsVector, class ScaleVector, class HeuristicT, 
-	uint16_t Connectors, uint16_t MaxReachableElevation,
-	VALIDATE(IsGraphNode, NodeT)=0,
-	VALIDATE(IsVector3, CenterVector)=0,
-	VALIDATE(IsVector3, BoundsVector)=0,
-	VALIDATE(IsVector3, ScaleVector)=0,
-	VALIDATE(IsHeuristic, HeuristicT)=0>
+template<class Node_, typename Priority_, class Center_WU_, 
+	class Bounds_WU_, class WU_per_NU_, class Heuristic_,
+	uint16_t Connectors, uint16_t MaxReachableElevation_WU,
+	VALIDATE(IsGraphNode, Node_)=0,
+	VALIDATE(IsVector3, Center_WU_)=0,
+	VALIDATE(IsVector3, Bounds_WU_)=0,
+	VALIDATE(IsVector3, WU_per_NU_)=0,
+	VALIDATE(IsHeuristic, Heuristic_)=0>
 struct TopologyTracer {
-	using Node = NodeT;
-	using Priority = PriorityT;
-	using Center = CenterVector;
-	using Bounds = BoundsVector;
-	using GraphDims_NU = typename ScalarMul<Bounds, 2>::type;
-	using GraphDims_WU = typename VectorMul<GraphDims_NU, ScaleVector>::type;
+	using Node = Node_;
+	using Priority = Priority_;
+	using Center_WU = Center_WU_;
+	using Bounds_WU = Bounds_WU_;
+	using GraphDims_NU = typename ScalarMul<Bounds_WU, 2>::type;
+	using GraphDims_WU = typename VectorMul<GraphDims_NU, WU_per_NU_>::type;
 	
-	using Scale = ScaleVector;
-	using Graph = GridGraph<NodeT, PriorityT, HeuristicT, GraphDims_NU, Connectors>;
-	static constexpr uint16_t max_reachable_elevation = MaxReachableElevation;
+	using WU_per_NU = WU_per_NU_;
+	static constexpr uint16_t max_reachable_elevation_WU = MaxReachableElevation_WU;
 	static constexpr uint16_t connectors = Connectors;
 
 	static constexpr uint16_t node_count_x = GraphDims_NU::x;
 	static constexpr uint16_t node_count_y = GraphDims_NU::y;
 	
 	static constexpr uint16_t node_count = node_count_x * node_count_y;
-
-	static constexpr uint16_t zone_count = 1 << NodeT::BitFieldSizes::ZONE_ID;
-	static constexpr uint16_t zone_count_sqrt = 1 << (NodeT::BitFieldSizes::ZONE_ID - 1);
+	// TODO: if the node determines the zone count, we can't have zone_count_x != zone_count_y ?
+	static constexpr uint8_t zone_count = 0x1 << Node_::BitFieldSizes::ZONE_ID;
+	static constexpr uint8_t zone_count_sqrt = CompileTimeSqrtU64(zone_count);
+	static constexpr uint8_t zone_count_x = zone_count_sqrt;
+	static constexpr uint8_t zone_count_y = zone_count_sqrt;
+	
+	using GraphDims_ZU = Vector3<zone_count_x, zone_count_y, 1>;
 
 	static_assert(
 		GraphDims_NU::x % zone_count_sqrt == 0 &&
 		GraphDims_NU::y % zone_count_sqrt == 0 &&
-		GraphDims_NU::z % zone_count_sqrt == 0 && ,
+		GraphDims_NU::z % zone_count_sqrt == 0,
 		"Incompatible node dimensions and zone count specification");
 
-	using ZoneDims_NU = ScalarDiv<GraphDims_NU, zone_count_sqrt>::type;
+	using ZoneDims_NU = typename ScalarDiv<GraphDims_NU, zone_count_sqrt>::type;
 
-	static constexpr uint16_t zone_node_count_x = 1 << NodeT::BitFieldSizes::ZONE_ID;
-	static constexpr int16_t top_z = Center::z + Bounds::z;
-	static constexpr int16_t bot_z = Center::z - Bounds::z;
-	
+	static constexpr uint16_t zone_node_count_x = ZoneDims_NU::x;
+	static constexpr uint16_t zone_node_count_y = ZoneDims_NU::y;
+	static constexpr uint16_t zone_node_count = zone_node_count_x * zone_node_count_y;
+	using WU_per_ZU = typename VectorMul<ZoneDims_NU, WU_per_NU>::type;
 
-	using TopLeftPoint = typename VectorAddLD<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
-	using BottomLeftPoint = typename VectorSub<Center, typename VectorMul<Bounds, ScaleVector>::type >::type;
+	static constexpr int16_t top_z_WU = Center_WU::z + Bounds_WU::z;
+	static constexpr int16_t bot_z_WU = Center_WU::z - Bounds_WU::z;
+
+	using TopLeftPoint_WU = typename VectorAddLD<Center_WU, 
+		typename VectorMul<Bounds_WU, WU_per_NU_>::type >::type;
+	using BottomLeftPoint_WU = typename VectorSub<Center_WU, 
+		typename VectorMul<Bounds_WU, WU_per_NU_>::type >::type;
+
+	using Graph = GridGraph<Node_, Priority_, Heuristic_, GraphDims_NU, ZoneDims_NU, GraphDims_ZU, Connectors>;
 };
 
 
@@ -88,12 +98,28 @@ public:
 	void RequestPath(const FVector& _start, const FVector& _end) const;
 	void DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const;
 
-	FORCEINLINE Tracer::Node const * const GetNearestNode(const FVector& _target) const {
-		uint16_t node_id = static_cast<uint16_t>(
-			(static_cast<uint16_t>((_target.Y - Tracer::BottomLeftPoint::y) / m_node_scaling.Y)) * Tracer::node_count_x +
-			(_target.X - Tracer::BottomLeftPoint::x) / m_node_scaling.X
+	FORCEINLINE Tracer::Node const * const 
+	GetNearestNode(const FVector& _target) const {
+		const uint8_t _zone_id = GetNearestZone(_target);
+		const uint8_t _dx_zu = _zone_id % Tracer::zone_count_x; // zones up
+		const uint8_t _dy_zu = (_zone_id / Tracer::zone_count_x) * Tracer::zone_count_x; // zones to the right, int division intended
+		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
+		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
+
+		uint16_t _node_id = static_cast<uint16_t>(
+			(static_cast<uint16_t>((_target.Y - _zone_blp_wu_y) / m_wu_per_nu_f.Y)) * Tracer::zone_node_count_x +
+			(_target.X - _zone_blp_wu_x) / m_wu_per_nu_f.X
 		);
-		return &m_base_graph->m_nodes[node_id];
+		return &m_base_graph->m_nodes[_node_id];
+	};
+
+	FORCEINLINE uint8_t
+	GetNearestZone(const FVector& _target) const {
+		const float _dy_wu = _target.Y - Tracer::BottomLeftPoint_WU::y;
+		const float _dx_wu = _target.X - Tracer::BottomLeftPoint_WU::x;
+		uint8_t _dy_zu = static_cast<uint8_t>(_dy_wu / m_wu_per_zu_f.Y) * Tracer::zone_count_x;
+		uint8_t _dx_zu = static_cast<uint8_t>(_dx_wu / m_wu_per_zu_f.X);
+		return _dy_zu + _dx_zu;
 	};
 
 protected:
@@ -103,6 +129,7 @@ private:
 	Tracer::Graph* m_base_graph	{ nullptr };
 	AStar<Tracer::Graph> m_astar;
 
-	static const FVector m_node_scaling;
+	static const FVector m_wu_per_nu_f;
+	static const FVector m_wu_per_zu_f;
 	static const uint16_t m_path_size_reservation = 64;
 };

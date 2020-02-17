@@ -267,7 +267,7 @@ SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
 }
 
 constexpr uint64_t
-CompileTimeSqrt(uint64_t x) {
+CompileTimeSqrtU64(uint64_t x) {
 	return SqrtHelper(x, 0, x / 2 + 1);
 }
 
@@ -279,7 +279,7 @@ SqrtNewtonRaphson(double x, double curr, double prev) {
 }
 
 constexpr double
-CompileTimeSqrt(double x) {
+CompileTimeSqrtD(double x) {
 	return x >= 0 && x < std::numeric_limits<double>::infinity()
 		? SqrtNewtonRaphson(x, x, 0)
 		: std::numeric_limits<double>::quiet_NaN();

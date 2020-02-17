@@ -29,37 +29,45 @@ void ATopologyTracer::Trace() {
 	const FCollisionQueryParams _query;
 	const FCollisionResponseParams _response;
 	FColor _color;
-	uint16_t id = 0;
 	Tracer::Node * current;
-	for (uint16_t i = 0; i < Tracer::node_count_y*Tracer::Scale::y; i += Tracer::Scale::y) {
-		for (uint16_t j = 0; j < Tracer::node_count_x*Tracer::Scale::x; j += Tracer::Scale::x, id++) {
-			const float _x = Tracer::BottomLeftPoint::x + j;
-			const float _y = Tracer::BottomLeftPoint::y + i;
-			const FVector _start(_x, _y, Tracer::top_z);
-			const FVector _end(_x, _y, Tracer::bot_z);
-			current = &m_base_graph->m_nodes[id];
-			current->is_off_topology = false;
-			if (world->LineTraceSingleByChannel(
-				out_hit,
-				_start,
-				_end,
-				CollisionChannels::Topology,
-				_query,
-				_response)) {
-				// float->int16. pros/cons of keeping in int16 vs float
-				current->SetLocation(_x, _y, out_hit.Location.Z);
-				current->is_reachable = out_hit.Location.Z < Tracer::max_reachable_elevation;
-				_color = FColor::Red;
-			} else {
-				current->SetLocation(_x, _y, 50);
-				current->is_off_topology = true;
-				_color = FColor::Blue;
-			};
-			FVector point;
-			current->ToVector(point);
-			//UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d, %p at %s"), current->id, current, *point.ToString());
-			//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
-			//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
+	for (uint8_t z = 0; z < Tracer::zone_count; z++) {
+		const uint8_t _dx_zu = z % Tracer::zone_count_x; // zones up
+		const uint8_t _dy_zu = (z / Tracer::zone_count_x) * Tracer::zone_count_x; // zones to the right, int division intended
+		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
+		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
+		const uint16_t _first_idx_in_zone = z * Tracer::zone_node_count;
+		uint16_t inner_zone_idx = 0;
+		for (uint16_t i_wu = 0; i_wu < Tracer::zone_node_count_y*Tracer::WU_per_NU::y; i_wu += Tracer::WU_per_NU::y) {
+			for (uint16_t j_wu = 0; j_wu < Tracer::zone_node_count_x*Tracer::WU_per_NU::x; j_wu += Tracer::WU_per_NU::x) {
+				const uint16_t _node_id = _first_idx_in_zone + inner_zone_idx++;
+				const float _x_wu = _zone_blp_wu_x + j_wu;
+				const float _y_wu = _zone_blp_wu_y + i_wu;
+				const FVector _start(_x_wu, _y_wu, Tracer::top_z_WU);
+				const FVector _end(_x_wu, _y_wu, Tracer::bot_z_WU);
+				current = &m_base_graph->m_nodes[_node_id];
+				current->is_off_topology = false;
+				if (world->LineTraceSingleByChannel(
+					out_hit,
+					_start,
+					_end,
+					CollisionChannels::Topology,
+					_query,
+					_response)) {
+
+					current->SetLocation(_x_wu, _y_wu, out_hit.Location.Z);
+					current->is_reachable = out_hit.Location.Z < Tracer::max_reachable_elevation_WU;
+					_color = FColor::Red;
+				} else {
+					current->SetLocation(_x_wu, _y_wu, 50);
+					current->is_off_topology = true;
+					_color = FColor::Blue;
+				};
+				FVector point;
+				current->ToVector(point);
+				//UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d, %p at %s"), current->id, current, *point.ToString());
+				//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
+				//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
+			}
 		}
 	}
 }
@@ -110,7 +118,12 @@ void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _pa
 	}
 }
 
-const FVector ATopologyTracer::m_node_scaling = {
-	static_cast<float>(Tracer::Scale::x),
-	static_cast<float>(Tracer::Scale::y),
-	static_cast<float>(Tracer::Scale::z) };
+const FVector ATopologyTracer::m_wu_per_nu_f = {
+	static_cast<float>(Tracer::WU_per_NU::x),
+	static_cast<float>(Tracer::WU_per_NU::y),
+	static_cast<float>(Tracer::WU_per_NU::z) };
+
+const FVector ATopologyTracer::m_wu_per_zu_f = {
+	static_cast<float>(Tracer::WU_per_ZU::x),
+	static_cast<float>(Tracer::WU_per_ZU::y),
+	static_cast<float>(Tracer::WU_per_ZU::z) };

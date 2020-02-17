@@ -36,8 +36,8 @@ template<class S1, class S2,
 
 
 int main() {
-	std::cout << sizeof (Node) << std::endl;
-	Node n;
+	//std::cout << sizeof (Node) << std::endl;
+	//Node n;
 	uint16_t count = 1 << 4;
 	std::cout << count << std::endl;
 	//std::cout << sizes::as << std::endl;
