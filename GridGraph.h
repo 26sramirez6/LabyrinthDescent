@@ -71,8 +71,8 @@ private:
 					node.id = _node_id;
 					node.zone_id = z;
 					
-					const bool _is_global_bot_edge = (z % zone_count_x==0) && j==0;
-					const bool _is_global_top_edge = (z+1) % zone_count_x==0 && j==zone_node_count_x - 1;
+					const bool _is_global_bot_edge = (z % GraphDims_ZU::x==0) && j==0;
+					const bool _is_global_top_edge = (z+1) % GraphDims_ZU::x==0 && j==zone_node_count_x - 1;
 					const bool _is_global_left_edge = z < zone_node_count_x && i==0;
 					const bool _is_global_right_edge = z > zone_count - zone_node_count_x - 1 && i==zone_node_count_y - 1;
 
