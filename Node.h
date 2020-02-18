@@ -22,7 +22,7 @@ struct GridNode {
 	uint16_t is_edge : IS_EDGE;
 	uint16_t is_reachable : IS_REACHABLE;
 	uint16_t is_off_topology : IS_OFF_TOPOLOGY;
-	uint16_t zone_id : ZONE_ID;
+	uint8_t zone_id : ZONE_ID;
 
 	uint16_t id;
 	int16_t x;

@@ -4,6 +4,7 @@
 
 #include <type_traits>
 #include <vector>
+#include <unordered_map>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "CollisionQueryParams.h"
@@ -26,7 +27,7 @@ template<class Node_, typename Priority_, class Center_WU_,
 	VALIDATE(IsVector3, Bounds_WU_)=0,
 	VALIDATE(IsVector3, WU_per_NU_)=0,
 	VALIDATE(IsHeuristic, Heuristic_)=0>
-struct TopologyTracer {
+struct PathFinderConfig {
 	using Node = Node_;
 	using Priority = Priority_;
 	using Center_WU = Center_WU_;
@@ -81,7 +82,7 @@ class LABYRINTHDESCENT_API ATopologyTracer : public AActor {
 	GENERATED_BODY()
 
 public:
-	using Tracer = TopologyTracer<
+	using Tracer = PathFinderConfig <
 		GridNode,				// node type
 		uint16_t,				// priority type
 		Vector3<0, 0, 0>,		// center
@@ -97,19 +98,21 @@ public:
 	void DebugDrawGraph(const float _time) const;
 	void RequestPath(const FVector& _start, const FVector& _end) const;
 	void DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const;
+	static void DebugLogConfig();
 
 	FORCEINLINE Tracer::Node const * const 
 	GetNearestNode(const FVector& _target) const {
 		const uint8_t _zone_id = GetNearestZone(_target);
 		const uint8_t _dx_zu = _zone_id % Tracer::zone_count_x; // zones up
-		const uint8_t _dy_zu = (_zone_id / Tracer::zone_count_x) * Tracer::zone_count_x; // zones to the right, int division intended
+		const uint8_t _dy_zu = _zone_id / Tracer::zone_count_x; // zones to the right
 		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
 		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
 
-		uint16_t _node_id = static_cast<uint16_t>(
-			(static_cast<uint16_t>((_target.Y - _zone_blp_wu_y) / m_wu_per_nu_f.Y)) * Tracer::zone_node_count_x +
+		const uint16_t _node_id_within_zone = static_cast<uint16_t>(
+			static_cast<uint16_t>((_target.Y - _zone_blp_wu_y) / m_wu_per_nu_f.Y) * Tracer::zone_node_count_x +
 			(_target.X - _zone_blp_wu_x) / m_wu_per_nu_f.X
 		);
+		const uint16_t _node_id = _zone_id * Tracer::zone_node_count + _node_id_within_zone;
 		return &m_base_graph->m_nodes[_node_id];
 	};
 

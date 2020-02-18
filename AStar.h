@@ -55,31 +55,29 @@ private:
 	};
 
 public:
-	FORCEINLINE static void
+	FORCEINLINE static bool
 	Search(
 		GraphT const * _graph,
 		Node const * const _start,
 		Node const * const _end,
 		std::vector<Node const *>& path_) {
-
-		SearchImp<std::false_type>(_graph, _start, _end, path_, nullptr);
+		return SearchImp<std::false_type>(_graph, _start, _end, path_, nullptr);
 	}
 
-	FORCEINLINE static void
+	FORCEINLINE static bool
 	Search(
 		GraphT const * _graph,
 		Node const * const _start,
 		Node const * const _end,
 		std::vector<Node const *>& path_,
 		UWorld const * const _world) {
-
-		SearchImp<std::true_type>(_graph, _start, _end, path_, _world);
+		return SearchImp<std::true_type>(_graph, _start, _end, path_, _world);
 	}
 
 private:
 
 	template<typename WaveEnabled>
-	static void SearchImp(
+	static bool SearchImp(
 		GraphT const * _graph,
 		Node const * const _start,
 		Node const * const _end,
@@ -91,29 +89,31 @@ private:
 
 		WaveHandle<WaveEnabled> wave;
 		frontier.emplace(0, _start);
-
 		// move to a map? a lot of stack allocation for a call
 		bool visited[GraphT::node_count] = { false };
 		Priority costs[GraphT::node_count] = { 0 };
 		uint16_t parents[GraphT::node_count] = { 0 };
 		Node const * current;
 		uint16_t const _end_id = _end->id;
-		while (!frontier.empty()) {
+		bool path_found = false;
+		while (UNLIKELY(!frontier.empty() && frontier.size()<m_max_frontier_size)) {
 			current = frontier.top().second;
 			const uint16 _current_id = current->id;
 			frontier.pop();
 
 			if (UNLIKELY(_current_id == _end_id)) {
+				path_found = true;
 				break;
 			}
 
 			Node const * const * connectors = _graph->GetConnectors(current);
-
+			
 			wave.AddToWave(current);
 			for (uint16_t i = 0; i < GraphT::connectors; i++) {
 				Node const * const next = connectors[i];
 				if (LIKELY(next)) {
 					const uint16 next_id = next->id;
+					//UE_LOG(LogTemp, Log, TEXT("processing neighbor i: %d, next id: %d"), i, next_id);
 					Priority cost_to_next = costs[_current_id] + _graph->EdgeWeight(current, next);
 
 					if ((!visited[next_id] || cost_to_next < costs[next_id]) &&
@@ -129,15 +129,30 @@ private:
 				}
 			}
 		}
-		wave.DebugDrawWave(_world);
-		path_.emplace_back(_end);
-		uint16_t current_id = parents[_end->id];
-		uint16_t start_id = _start->id;
-		while (LIKELY(current_id != start_id)) {
-			path_.emplace_back(&_graph->m_nodes[current_id]);
-			current_id = parents[current_id];
+
+		if (frontier.size() > m_max_frontier_size) {
+			UE_LOG(LogTemp, Log, TEXT("frontier size exceeding max allowable size: %d"), m_max_frontier_size);
 		}
-		path_.emplace_back(_start);
-		std::reverse(path_.begin(), path_.end());
+
+		wave.DebugDrawWave(_world);
+		if (path_found) {
+			path_.emplace_back(_end);
+			uint16_t current_id = parents[_end->id];
+			uint16_t start_id = _start->id;
+			bool hasnt_exceeded_limit = true;
+			uint16_t i = 0;//
+			while (LIKELY(current_id != start_id && ++i < GraphT::node_count)) {
+				path_.emplace_back(&_graph->m_nodes[current_id]);
+				current_id = parents[current_id];
+			}
+			path_.emplace_back(_start);
+			std::reverse(path_.begin(), path_.end());
+		} else {
+			UE_LOG(LogTemp, Log, TEXT("error, path not found"));
+		}
+		return path_found;
 	}
+
+private:
+	constexpr static uint16_t m_max_frontier_size = 500;
 };

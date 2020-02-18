@@ -64,6 +64,11 @@ template<int I1, int I2, int I3>
 using Vector3 = IntSequence<I1, I2, I3>;
 
 #define VALIDATE(Validator, ...) typename std::enable_if<Validator<__VA_ARGS__>::value, int>::type
+#define STRINGIFY(s) #s
+#define LOG_VECTOR3(Vector3_) Vector3_::x, Vector3_::y, Vector3_::z
+#define UE_LOG_VECTOR3(Vector_) UE_LOG(LogTemp, Log, TEXT(STRINGIFY(Vector_: (%d, %d, %d))), LOG_VECTOR3(Vector_));
+#define MID ((lo + hi + 1) / 2)
+
 template<typename T> struct IsIntSequence : std::integral_constant<bool, false> {};
 template<int ...Is> struct IsIntSequence<IntSequence<Is...>> : std::integral_constant<bool, true> {};
 
@@ -80,16 +85,16 @@ template<class Sequence1, class Sequence2,
 };
 
 template<int Index, class Sequence>
-struct IntAtIndex {};
+struct Indexer {};
 
 template<int I, int... Is>
-struct IntAtIndex<0, IntSequence<I, Is...>> {
+struct Indexer<0, IntSequence<I, Is...>> {
 	static constexpr int value = I;
 };
 
 template<int Index, int I, int... Is>
-struct IntAtIndex<Index, IntSequence<I, Is...>> :
-	public IntAtIndex<Index - 1, IntSequence<Is...>> {
+struct Indexer<Index, IntSequence<I, Is...>> :
+	public Indexer<Index - 1, IntSequence<Is...>> {
 };
 
 template<class First, class Second>
@@ -257,8 +262,6 @@ template<class Sequence1, class Sequence2,
 template<class Sequence1, class Sequence2,
 	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
 	struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
-
-#define MID ((lo + hi + 1) / 2)
 
 constexpr uint64_t
 SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {

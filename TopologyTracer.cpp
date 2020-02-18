@@ -4,6 +4,7 @@
 
 ATopologyTracer::ATopologyTracer() {
 	UE_LOG(LogTemp, Log, TEXT("Constructing Tracer"));
+	ATopologyTracer::DebugLogConfig();
 	bBlockInput = true;
 	bHidden = true;
 	bIgnoresOriginShifting = true;
@@ -32,7 +33,7 @@ void ATopologyTracer::Trace() {
 	Tracer::Node * current;
 	for (uint8_t z = 0; z < Tracer::zone_count; z++) {
 		const uint8_t _dx_zu = z % Tracer::zone_count_x; // zones up
-		const uint8_t _dy_zu = (z / Tracer::zone_count_x) * Tracer::zone_count_x; // zones to the right, int division intended
+		const uint8_t _dy_zu = z / Tracer::zone_count_x; // zones to the right, int division intended
 		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
 		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
 		const uint16_t _first_idx_in_zone = z * Tracer::zone_node_count;
@@ -74,14 +75,21 @@ void ATopologyTracer::Trace() {
 
 void ATopologyTracer::DebugDrawGraph(const float _time) const {
 	UWorld * world = GetWorld();
+	std::unordered_map<uint8_t, FColor> color_zone_map;
+
 	if (IsValid(world)) {
 		FVector start, end;
 		Tracer::Node * current;
 		for (uint16_t i = 0; i < Tracer::node_count; i++) {
-			Tracer::Node * next = m_base_graph->m_connectors[i];
 			current = &m_base_graph->m_nodes[i];
+			const uint8_t _zone_id = current->zone_id;
 			current->ToVector(start);
-			DrawDebugPoint(world, start, 5.f, current->is_reachable ? FColor::Red : FColor::Blue, false, _time);
+			if (color_zone_map.find(_zone_id) == color_zone_map.end()) {
+				color_zone_map.emplace(_zone_id, FColor::MakeRandomColor());
+			}
+			FColor zone_color = color_zone_map.at(_zone_id);
+			DrawDebugPoint(world, start, 5.f, zone_color, false, _time);
+
 			//UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s, reachable?: %d"), current->id, current, *start.ToString(), current->is_reachable);
 
 			const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
@@ -89,11 +97,24 @@ void ATopologyTracer::DebugDrawGraph(const float _time) const {
 				Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
 				if (next) {
 					next->ToVector(end);
-					DrawDebugLine(world, start, end, current->is_reachable ? FColor::Red : FColor::Blue, false, _time, 0, .5f);
+					DrawDebugLine(world, start, end, zone_color, false, _time, 0, .5f);
 				}
 			}
 		}
 	}
+}
+
+void ATopologyTracer::DebugLogConfig() {
+	UE_LOG(LogTemp, Log, TEXT("TopologyTracer Config:"));
+	UE_LOG_VECTOR3(Tracer::Center_WU);
+	UE_LOG_VECTOR3(Tracer::Bounds_WU);
+	UE_LOG_VECTOR3(Tracer::WU_per_NU);
+	UE_LOG_VECTOR3(Tracer::GraphDims_NU);
+	UE_LOG_VECTOR3(Tracer::GraphDims_ZU);
+	UE_LOG_VECTOR3(Tracer::WU_per_ZU);
+	UE_LOG_VECTOR3(Tracer::ZoneDims_NU);
+	UE_LOG_VECTOR3(Tracer::TopLeftPoint_WU);
+	UE_LOG_VECTOR3(Tracer::BottomLeftPoint_WU);
 }
 
 void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) const {
@@ -101,10 +122,20 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	path.reserve(m_path_size_reservation);
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
-	AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
-	UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"), 
-		*_start.ToString(), *_end.ToString(), path.size());
-	DebugDrawPath(path, 5.f);
+
+	FVector start_loc, end_loc;
+	start->ToVector(start_loc);
+	end->ToVector(end_loc);
+	UE_LOG(LogTemp, Log, TEXT("Path requested for start node %d, "
+		"zone %d at %s to end node %d, zone %d at %s"), 
+		start->id, start->zone_id, *start_loc.ToString(), end->id, end->zone_id, *end_loc.ToString());
+
+	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
+	if (_path_found) {
+		UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"),
+			*_start.ToString(), *_end.ToString(), path.size());
+		DebugDrawPath(path, 5.f);
+	}
 }
 
 void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const {
