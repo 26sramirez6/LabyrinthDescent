@@ -95,7 +95,7 @@ void ATopologyTracer::DebugDrawGraph(const float _time) const {
 			const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
 			for (uint16_t j = 0; j < Tracer::Graph::connectors; j++) {
 				Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
-				if (next) {
+				if (next && (j==3 || j ==4 || j ==4)) {
 					next->ToVector(end);
 					DrawDebugLine(world, start, end, zone_color, false, _time, 0, .5f);
 				}
@@ -122,7 +122,9 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	path.reserve(m_path_size_reservation);
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
-
+	
+#if !UE_BUILD_SHIPPING
+	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
 	FVector start_loc, end_loc;
 	start->ToVector(start_loc);
 	end->ToVector(end_loc);
@@ -130,12 +132,14 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 		"zone %d at %s to end node %d, zone %d at %s"), 
 		start->id, start->zone_id, *start_loc.ToString(), end->id, end->zone_id, *end_loc.ToString());
 
-	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
 	if (_path_found) {
 		UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"),
 			*_start.ToString(), *_end.ToString(), path.size());
 		DebugDrawPath(path, 5.f);
 	}
+#else
+	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
+#endif	
 }
 
 void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const {

@@ -65,63 +65,68 @@ private:
 			const uint16_t _first_idx_in_zone = z * zone_node_count;
 			for (uint16_t i = 0; i < zone_node_count_y; i++) {
 				for (uint16_t j = 0; j < zone_node_count_x; j++) {
+					UE_LOG(LogTemp, Log, TEXT("%d"), z);
 					const uint16_t _node_id = _first_idx_in_zone + i*zone_node_count_x + j;
 					const uint32_t _current = _node_id * Connectors;
 					Node & node = m_nodes[_node_id];
 					node.id = _node_id;
 					node.zone_id = z;
 					
-					const bool _is_global_bot_edge = (z % GraphDims_ZU::x==0) && j==0;
-					const bool _is_global_top_edge = (z+1) % GraphDims_ZU::x==0 && j==zone_node_count_x - 1;
-					const bool _is_global_left_edge = z < zone_node_count_x && i==0;
-					const bool _is_global_right_edge = z > zone_count - zone_node_count_x - 1 && i==zone_node_count_y - 1;
+					const bool _is_zone_bot_edge = j == 0;
+					const bool _is_zone_left_edge = i == 0;
+					const bool _is_zone_top_edge = j == zone_node_count_x - 1;
+					const bool _is_zone_right_edge = i == zone_node_count_y - 1;
+					const bool _is_global_bot_edge = (z % GraphDims_ZU::x == 0) && _is_zone_bot_edge;
+					const bool _is_global_top_edge = (z + 1) % GraphDims_ZU::x == 0 && _is_zone_top_edge;
+					const bool _is_global_left_edge = z < zone_node_count_x && _is_zone_left_edge;
+					const bool _is_global_right_edge = z > zone_count - zone_node_count_x - 1 && _is_zone_right_edge;
 
 					// bot left
 					m_connectors[_current] = UNLIKELY(_is_global_bot_edge || _is_global_left_edge) ? // graph bot or left edge
-						nullptr : UNLIKELY(j==0 && i==0) ? // zone bl corner
-							&m_nodes[_node_id - zone_edge_h_corrector - zone_edge_v_corrector] : UNLIKELY(i==0) ? // zone left edge
-								&m_nodes[_node_id - 1 - zone_edge_h_corrector] : UNLIKELY(j==0) ? // zone bot edge
+						nullptr : UNLIKELY(_is_zone_bot_edge && _is_zone_left_edge) ? // zone bl corner
+							&m_nodes[_node_id - zone_edge_h_corrector - zone_edge_v_corrector] : UNLIKELY(_is_zone_left_edge) ? // zone left edge
+								&m_nodes[_node_id - 1 - zone_edge_h_corrector] : UNLIKELY(_is_zone_bot_edge) ? // zone bot edge
 									&m_nodes[_node_id - zone_edge_v_corrector - zone_node_count_x] : &m_nodes[_node_id - zone_node_count_x - 1];
 
 					// bot mid
 					m_connectors[_current + 1] = UNLIKELY(_is_global_bot_edge) ?
-						nullptr : UNLIKELY(j==0) ?
+						nullptr : UNLIKELY(_is_zone_bot_edge) ?
 							&m_nodes[_node_id - zone_edge_v_corrector]  : &m_nodes[_node_id - 1];
 
 					// bot right
 					m_connectors[_current + 2] = UNLIKELY(_is_global_bot_edge || _is_global_right_edge) ? // graph bot or right edge
-						nullptr : UNLIKELY(j==0 && i==zone_node_count_y -1) ? // zone bot right corner
-							&m_nodes[_node_id + zone_edge_h_corrector - zone_edge_v_corrector] : UNLIKELY(i==zone_node_count_y -1) ?// zone right edge
-								&m_nodes[_node_id + zone_edge_h_corrector - 1] : UNLIKELY(j==0) ? // zone bot edge
+						nullptr : UNLIKELY(_is_zone_bot_edge && _is_zone_right_edge) ? // zone bot right corner
+							&m_nodes[_node_id + zone_edge_h_corrector - zone_edge_v_corrector] : UNLIKELY(_is_zone_right_edge) ?// zone right edge
+								&m_nodes[_node_id + zone_edge_h_corrector - 1] : UNLIKELY(_is_zone_bot_edge) ? // zone bot edge
 									&m_nodes[_node_id - zone_edge_v_corrector + zone_node_count_x] : &m_nodes[_node_id + zone_node_count_x - 1] ;
 
 					// mid left
 					m_connectors[_current + 3] = UNLIKELY(_is_global_left_edge) ?
-						nullptr : UNLIKELY(i==0) ?
+						nullptr : UNLIKELY(_is_zone_left_edge) ?
 							&m_nodes[_node_id - zone_edge_h_corrector] : &m_nodes[_node_id - zone_node_count_x];
 
 					// mid right
 					m_connectors[_current + 4] = UNLIKELY(_is_global_right_edge) ?
-						nullptr : UNLIKELY(i==zone_node_count_y - 1) ?
+						nullptr : UNLIKELY(_is_zone_right_edge) ?
 							&m_nodes[_node_id + zone_edge_h_corrector] : &m_nodes[_node_id + zone_node_count_x];
 
 					// top left
 					m_connectors[_current + 5] = UNLIKELY(_is_global_top_edge || _is_global_left_edge) ?
-						nullptr : UNLIKELY(j==zone_node_count_x - 1 && i==0) ? // zone top left corner
-							&m_nodes[_node_id + zone_edge_v_corrector - zone_edge_h_corrector] : UNLIKELY(i==0) ? // zone left edge
-								&m_nodes[_node_id - zone_edge_h_corrector + 1] : UNLIKELY(j==zone_node_count_x - 1) ? // zone top edge
+						nullptr : UNLIKELY(_is_zone_top_edge && _is_zone_left_edge) ? // zone top left corner
+							&m_nodes[_node_id + zone_edge_v_corrector - zone_edge_h_corrector] : UNLIKELY(_is_zone_left_edge) ? // zone left edge
+								&m_nodes[_node_id - zone_edge_h_corrector + 1] : UNLIKELY(_is_zone_top_edge) ? // zone top edge
 									&m_nodes[_node_id + zone_edge_v_corrector - zone_node_count_x] : &m_nodes[_node_id - zone_node_count_x + 1];
 					
 					// top mid
 					m_connectors[_current + 6] = UNLIKELY(_is_global_top_edge) ?
-						nullptr : UNLIKELY(j==zone_node_count_x - 1) ?
+						nullptr : UNLIKELY(_is_zone_top_edge) ?
 							&m_nodes[_node_id + zone_edge_v_corrector] : &m_nodes[_node_id + 1];
 
 					// top right
 					m_connectors[_current + 7] = UNLIKELY(_is_global_top_edge || _is_global_right_edge) ?
-						nullptr : UNLIKELY(j==zone_node_count_x - 1 && i==zone_node_count_y - 1) ? // zone top right corner
+						nullptr : UNLIKELY(_is_zone_top_edge && _is_zone_right_edge) ? // zone top right corner
 							&m_nodes[_node_id + zone_edge_v_corrector + zone_edge_h_corrector] : UNLIKELY(i==zone_node_count_y - 1) ? // zone right edge
-								&m_nodes[_node_id + zone_edge_h_corrector + 1] : UNLIKELY(j==zone_node_count_x - 1) ? // zone top edge
+								&m_nodes[_node_id + zone_edge_h_corrector + 1] : UNLIKELY(_is_zone_top_edge) ? // zone top edge
 									&m_nodes[_node_id + zone_edge_v_corrector + zone_node_count_x] : &m_nodes[_node_id + zone_node_count_x + 1];
 
 					node.is_edge = UNLIKELY(
