@@ -8,6 +8,7 @@
 #include "Target.h"
 #include "UserCharacter.h"
 #include "AStar.h"
+#include "PathSettings.h"
 #include "Mob.h"
 #include "TopologyTracer.h"
 #include "MyCamera.h"

@@ -65,9 +65,6 @@ void ATopologyTracer::Trace() {
 				};
 				FVector point;
 				current->ToVector(point);
-				//UE_LOG(LogTemp, Log, TEXT("TRACE: Drawing node %d, %p at %s"), current->id, current, *point.ToString());
-				//DrawDebugPoint(world, point, 5.f, _color, false, 50.);
-				//UE_LOG(LogTemp, Log, TEXT("Drew debug point"));
 			}
 		}
 	}
@@ -91,15 +88,15 @@ void ATopologyTracer::DebugDrawGraph(const float _time) const {
 			DrawDebugPoint(world, start, 5.f, zone_color, false, _time);
 
 			//UE_LOG(LogTemp, Log, TEXT("DEBUGDRAWGRAPH: Drawing node %d, %p at %s, reachable?: %d"), current->id, current, *start.ToString(), current->is_reachable);
-
 			const uint32_t _neighbor_id = i * Tracer::Graph::connectors;
 			for (uint16_t j = 0; j < Tracer::Graph::connectors; j++) {
 				Tracer::Node * next = m_base_graph->m_connectors[_neighbor_id + j];
-				if (next && (j==3 || j ==4 || j ==4)) {
+				if (next) {
 					next->ToVector(end);
 					DrawDebugLine(world, start, end, zone_color, false, _time, 0, .5f);
 				}
 			}
+			
 		}
 	}
 }
@@ -115,6 +112,9 @@ void ATopologyTracer::DebugLogConfig() {
 	UE_LOG_VECTOR3(Tracer::ZoneDims_NU);
 	UE_LOG_VECTOR3(Tracer::TopLeftPoint_WU);
 	UE_LOG_VECTOR3(Tracer::BottomLeftPoint_WU);
+	UE_LOG(LogTemp, Log, TEXT("zone count: %d"), Tracer::zone_count);
+	UE_LOG(LogTemp, Log, TEXT("zone node count %d"), Tracer::zone_node_count);
+	UE_LOG(LogTemp, Log, TEXT("node count %d"), Tracer::node_count);
 }
 
 void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) const {
@@ -123,23 +123,29 @@ void ATopologyTracer::RequestPath(const FVector& _start, const FVector& _end) co
 	Tracer::Node const * const start = GetNearestNode(_start);
 	Tracer::Node const * const end = GetNearestNode(_end);
 	
-#if !UE_BUILD_SHIPPING
+#if DRAW_FRONTIER
 	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path, GetWorld());
+#else
+	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
+#endif
+
+#if LOG_PATH_DIAGNOSTICS
 	FVector start_loc, end_loc;
 	start->ToVector(start_loc);
 	end->ToVector(end_loc);
+
 	UE_LOG(LogTemp, Log, TEXT("Path requested for start node %d, "
 		"zone %d at %s to end node %d, zone %d at %s"), 
 		start->id, start->zone_id, *start_loc.ToString(), end->id, end->zone_id, *end_loc.ToString());
-
 	if (_path_found) {
 		UE_LOG(LogTemp, Log, TEXT("Completed path, start: %s, end: %s, length: %d"),
 			*_start.ToString(), *_end.ToString(), path.size());
-		DebugDrawPath(path, 5.f);
 	}
-#else
-	const bool _path_found = AStar<Tracer::Graph>::Search(m_base_graph, start, end, path);
-#endif	
+#endif
+
+#if DRAW_PATH
+	if (_path_found) DebugDrawPath(path, 5.f);
+#endif
 }
 
 void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _path, const float _time) const {
@@ -148,7 +154,9 @@ void ATopologyTracer::DebugDrawPath(const std::vector<Tracer::Node const *>& _pa
 	for (uint16_t i = 0; i < _path.size() - 1; ++i) {
 		_path[i]->ToVector(start);
 		_path[i+1]->ToVector(end);
+#if LOG_PATH_VECTOR
 		UE_LOG(LogTemp, Log, TEXT("node %d on path, id: %d, location: %s"), i, _path[i]->id, *start.ToString());
+#endif
 		DrawDebugLine(world, start, end, FColor::Green, true, _time, 0, 5.f);
 	}
 }

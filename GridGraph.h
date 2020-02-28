@@ -65,7 +65,6 @@ private:
 			const uint16_t _first_idx_in_zone = z * zone_node_count;
 			for (uint16_t i = 0; i < zone_node_count_y; i++) {
 				for (uint16_t j = 0; j < zone_node_count_x; j++) {
-					UE_LOG(LogTemp, Log, TEXT("%d"), z);
 					const uint16_t _node_id = _first_idx_in_zone + i*zone_node_count_x + j;
 					const uint32_t _current = _node_id * Connectors;
 					Node & node = m_nodes[_node_id];
@@ -78,8 +77,8 @@ private:
 					const bool _is_zone_right_edge = i == zone_node_count_y - 1;
 					const bool _is_global_bot_edge = (z % GraphDims_ZU::x == 0) && _is_zone_bot_edge;
 					const bool _is_global_top_edge = (z + 1) % GraphDims_ZU::x == 0 && _is_zone_top_edge;
-					const bool _is_global_left_edge = z < zone_node_count_x && _is_zone_left_edge;
-					const bool _is_global_right_edge = z > zone_count - zone_node_count_x - 1 && _is_zone_right_edge;
+					const bool _is_global_left_edge = z < GraphDims_ZU::x && _is_zone_left_edge;
+					const bool _is_global_right_edge = z > zone_count - GraphDims_ZU::x - 1 && _is_zone_right_edge;
 
 					// bot left
 					m_connectors[_current] = UNLIKELY(_is_global_bot_edge || _is_global_left_edge) ? // graph bot or left edge

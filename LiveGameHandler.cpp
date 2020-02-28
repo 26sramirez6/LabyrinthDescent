@@ -33,7 +33,9 @@ ALiveGameHandler::ALiveGameHandler() :
 		m_topo = world->SpawnActor<ATopologyTracer>();
 		m_mobs = world->SpawnActor<AMob>();
 		m_topo->Trace();
+#if DRAW_GRAPH
 		m_topo->DebugDrawGraph(100.f);
+#endif
 	}
 }
 

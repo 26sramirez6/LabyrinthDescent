@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Util.h"
+#include "PathSettings.h"
 #include "GridGraph.h"
 
 
@@ -96,7 +97,7 @@ private:
 		Node const * current;
 		uint16_t const _end_id = _end->id;
 		bool path_found = false;
-		while (UNLIKELY(!frontier.empty() && frontier.size()<m_max_frontier_size)) {
+		while (UNLIKELY(!frontier.empty())) {
 			current = frontier.top().second;
 			const uint16 _current_id = current->id;
 			frontier.pop();
@@ -130,26 +131,24 @@ private:
 			}
 		}
 
-		if (frontier.size() > m_max_frontier_size) {
-			UE_LOG(LogTemp, Log, TEXT("frontier size exceeding max allowable size: %d"), m_max_frontier_size);
-		}
-
 		wave.DebugDrawWave(_world);
 		if (path_found) {
 			path_.emplace_back(_end);
 			uint16_t current_id = parents[_end->id];
 			uint16_t start_id = _start->id;
-			bool hasnt_exceeded_limit = true;
-			uint16_t i = 0;//
+			uint16_t i = 0;
 			while (LIKELY(current_id != start_id && ++i < GraphT::node_count)) {
 				path_.emplace_back(&_graph->m_nodes[current_id]);
 				current_id = parents[current_id];
 			}
 			path_.emplace_back(_start);
 			std::reverse(path_.begin(), path_.end());
-		} else {
+		}
+#if LOG_PATH_DIAGNOSTICS
+		else {
 			UE_LOG(LogTemp, Log, TEXT("error, path not found"));
 		}
+#endif
 		return path_found;
 	}
 

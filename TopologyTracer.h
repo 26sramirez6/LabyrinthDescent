@@ -12,6 +12,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Util.h"
+#include "PathSettings.h"
 #include "CollisionChannels.h"
 #include "Heuristics.h"
 #include "AStar.h"
@@ -86,8 +87,8 @@ public:
 		GridNode,				// node type
 		uint16_t,				// priority type
 		Vector3<0, 0, 0>,		// center
-		Vector3<64, 64, 200>,	// bounds
-		Vector3<32, 32, 1>,		// scale
+		Vector3<120, 120, 200>,	// bounds
+		Vector3<16, 16, 1>,		// scale
 		Octile<GridNode>,		// heuristic
 		8,						// connectors
 		10>;					// max reachable elevation 
