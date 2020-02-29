@@ -5,7 +5,9 @@
 //#include "CoreMinimal.h"
 #include <type_traits>
 #include <cstdint>
+#include <tuple>
 #include <limits>
+#include <utility> 
 
 #define DOUBLE2INT(i, d) \
     {double t = ((d) + 6755399441055744.0); i = *((int *)(&t));}
@@ -18,6 +20,65 @@
 //
 //	return retval;
 //}
+
+constexpr uint64_t
+SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
+	return lo == hi ? lo : ((x / ((lo + hi + 1) / 2) < ((lo + hi + 1) / 2))
+		? SqrtHelper(x, lo, ((lo + hi + 1) / 2) - 1) : SqrtHelper(x, ((lo + hi + 1) / 2), hi));
+}
+
+constexpr uint64_t
+CompileTimeSqrtU64(uint64_t x) {
+	return SqrtHelper(x, 0, x / 2 + 1);
+}
+
+constexpr double
+SqrtNewtonRaphson(double x, double curr, double prev) {
+	return curr == prev
+		? curr
+		: SqrtNewtonRaphson(x, 0.5 * (curr + x / curr), curr);
+}
+
+constexpr double
+CompileTimeSqrtD(double x) {
+	return x >= 0 && x < std::numeric_limits<double>::infinity()
+		? SqrtNewtonRaphson(x, x, 0)
+		: std::numeric_limits<double>::quiet_NaN();
+}
+
+template <unsigned int N, typename T>
+struct tuple_n_t {
+	typedef decltype(std::tuple_cat(std::tuple<T>(), typename tuple_n_t<N - 1, T>::type())) type;
+};
+
+template <typename T>
+struct tuple_n_t<0, T> {
+	typedef decltype(std::tuple<>()) type;
+};
+
+template<std::size_t I = 0, typename FuncT, typename... Tp>
+inline typename std::enable_if<I == sizeof...(Tp), void>::type
+tuple_for_each(std::tuple<Tp...> &, FuncT) {}
+
+template<std::size_t I = 0, typename FuncT, typename... Tp>
+inline typename std::enable_if < I < sizeof...(Tp), void>::type
+tuple_for_each(std::tuple<Tp...>& t, FuncT f) {
+	f(std::get<I>(t));
+	tuple_for_each<I + 1, FuncT, Tp...>(t, f);
+}
+
+template<std::size_t S, std::size_t E, typename T, 
+	typename std::enable_if<S==E-1, int>::type = 0>
+struct TupleForRange {
+	using type = std::tuple<typename T::type<S>>;
+};
+
+template<std::size_t S, std::size_t E, typename T>
+struct TupleForRange {
+	static_assert(S < E, "Invalid template parameters for TupleForRange");
+	using type = std::tuple_cat(std::tuple<typename T::type<S>>,
+		typename TupleForRange<S + 1, E, T>::type);
+};
 
 template<int ...I>
 struct IntSequence {};
@@ -67,7 +128,6 @@ using Vector3 = IntSequence<I1, I2, I3>;
 #define STRINGIFY(s) #s
 #define LOG_VECTOR3(Vector3_) Vector3_::x, Vector3_::y, Vector3_::z
 #define UE_LOG_VECTOR3(Vector_) UE_LOG(LogTemp, Log, TEXT(STRINGIFY(Vector_: (%d, %d, %d))), LOG_VECTOR3(Vector_));
-#define MID ((lo + hi + 1) / 2)
 
 template<typename T> struct IsIntSequence : std::integral_constant<bool, false> {};
 template<int ...Is> struct IsIntSequence<IntSequence<Is...>> : std::integral_constant<bool, true> {};
@@ -248,42 +308,30 @@ struct VectorOperator<IntSequence<I, Is...>, IntSequence<J, Js...>, Operation> {
 };
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
-	struct VectorMul : public VectorOperator<Sequence1, Sequence2, multiplies<int>> {};
+VALIDATE(IsSameSize, Sequence1, Sequence2) = 0>
+struct VectorMul : public VectorOperator<Sequence1, Sequence2, multiplies<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
-	struct VectorAddLD : public VectorOperator<Sequence1, Sequence2, adds<int>> {};
+VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+struct VectorAddLD : public VectorOperator<Sequence1, Sequence2, adds<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
-	struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
+VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
 
 template<class Sequence1, class Sequence2,
-	VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
-	struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
+VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
+struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
 
-constexpr uint64_t
-SqrtHelper(uint64_t x, uint64_t lo, uint64_t hi) {
-	return lo == hi ? lo : ((x / MID < MID)
-		? SqrtHelper(x, lo, MID - 1) : SqrtHelper(x, MID, hi));
-}
-
-constexpr uint64_t
-CompileTimeSqrtU64(uint64_t x) {
-	return SqrtHelper(x, 0, x / 2 + 1);
-}
-
-constexpr double
-SqrtNewtonRaphson(double x, double curr, double prev) {
-	return curr == prev
-		? curr
-		: SqrtNewtonRaphson(x, 0.5 * (curr + x / curr), curr);
-}
-
-constexpr double
-CompileTimeSqrtD(double x) {
-	return x >= 0 && x < std::numeric_limits<double>::infinity()
-		? SqrtNewtonRaphson(x, x, 0)
-		: std::numeric_limits<double>::quiet_NaN();
-}
+//template<unsigned N, class T>
+//struct Iterator;
+//
+//template<class T>
+//struct Iterator<0, T> {
+//	using type = T<0>;
+//};
+//
+//template<unsigned N, class T>
+//struct Iterator<N, T> {
+//	using type = T<N>;
+//};

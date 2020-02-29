@@ -2,8 +2,7 @@
 
 #include "Mob.h"
 
-AMob::AMob()
-{
+AMob::AMob() {
 	PrimaryActorTick.bCanEverTick = true;
 	m_base_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
 	RootComponent = m_base_mesh;
@@ -17,14 +16,12 @@ AMob::AMob()
 	}
 }
 
-void AMob::BeginPlay()
-{
+void AMob::BeginPlay() {
 	Super::BeginPlay();
 	
 }
 
-void AMob::Tick(float DeltaTime)
-{
+void AMob::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 }

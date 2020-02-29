@@ -63,7 +63,7 @@ struct PathFinderConfig {
 	static constexpr uint16_t zone_node_count_x = ZoneDims_NU::x;
 	static constexpr uint16_t zone_node_count_y = ZoneDims_NU::y;
 	static constexpr uint16_t zone_node_count = zone_node_count_x * zone_node_count_y;
-	using WU_per_ZU = typename VectorMul<ZoneDims_NU, WU_per_NU>::type;
+	using ZoneDims_WU = typename VectorMul<ZoneDims_NU, WU_per_NU>::type;
 
 	static constexpr int16_t top_z_WU = Center_WU::z + Bounds_WU::z;
 	static constexpr int16_t bot_z_WU = Center_WU::z - Bounds_WU::z;
@@ -73,7 +73,19 @@ struct PathFinderConfig {
 	using BottomLeftPoint_WU = typename VectorSub<Center_WU, 
 		typename VectorMul<Bounds_WU, WU_per_NU_>::type >::type;
 
-	using Graph = GridGraph<Node_, Priority_, Heuristic_, GraphDims_NU, ZoneDims_NU, GraphDims_ZU, Connectors>;
+	using Graph = GridGraph<Node_, Priority_, Heuristic_, 
+		GraphDims_NU, ZoneDims_NU, GraphDims_ZU, Connectors>;
+	
+	struct GetZoneBLP_WU {
+		template<uint8_t _zone_id>
+		using type = Vector2<
+			BottomLeftPoint_WU::x + (_zone_id % zone_count_x) * ZoneDims_WU::x,
+			BottomLeftPoint_WU::y + (_zone_id / zone_count_x) * ZoneDims_WU::y>;
+	};
+
+	using ZoneBLP_WU = typename TupleForRange<0, zone_count, GetZoneBLP_WU>::type;
+	
+
 };
 
 
@@ -106,8 +118,8 @@ public:
 		const uint8_t _zone_id = GetNearestZone(_target);
 		const uint8_t _dx_zu = _zone_id % Tracer::zone_count_x; // zones up
 		const uint8_t _dy_zu = _zone_id / Tracer::zone_count_x; // zones to the right
-		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
-		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
+		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::ZoneDims_WU::x;
+		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::ZoneDims_WU::y;
 
 		const uint16_t _node_id_within_zone = static_cast<uint16_t>(
 			static_cast<uint16_t>((_target.Y - _zone_blp_wu_y) / m_wu_per_nu_f.Y) * Tracer::zone_node_count_x +
@@ -121,8 +133,8 @@ public:
 	GetNearestZone(const FVector& _target) const {
 		const float _dy_wu = _target.Y - Tracer::BottomLeftPoint_WU::y;
 		const float _dx_wu = _target.X - Tracer::BottomLeftPoint_WU::x;
-		uint8_t _dy_zu = static_cast<uint8_t>(_dy_wu / m_wu_per_zu_f.Y) * Tracer::zone_count_x;
-		uint8_t _dx_zu = static_cast<uint8_t>(_dx_wu / m_wu_per_zu_f.X);
+		uint8_t _dy_zu = static_cast<uint8_t>(_dy_wu / m_ZoneDims_WU_f.Y) * Tracer::zone_count_x;
+		uint8_t _dx_zu = static_cast<uint8_t>(_dx_wu / m_ZoneDims_WU_f.X);
 		return _dy_zu + _dx_zu;
 	};
 
@@ -134,6 +146,6 @@ private:
 	AStar<Tracer::Graph> m_astar;
 
 	static const FVector m_wu_per_nu_f;
-	static const FVector m_wu_per_zu_f;
+	static const FVector m_ZoneDims_WU_f;
 	static const uint16_t m_path_size_reservation = 64;
 };

@@ -34,8 +34,8 @@ void ATopologyTracer::Trace() {
 	for (uint8_t z = 0; z < Tracer::zone_count; z++) {
 		const uint8_t _dx_zu = z % Tracer::zone_count_x; // zones up
 		const uint8_t _dy_zu = z / Tracer::zone_count_x; // zones to the right, int division intended
-		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::WU_per_ZU::x;
-		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::WU_per_ZU::y;
+		const int16_t _zone_blp_wu_x = Tracer::BottomLeftPoint_WU::x + _dx_zu * Tracer::ZoneDims_WU::x;
+		const int16_t _zone_blp_wu_y = Tracer::BottomLeftPoint_WU::y + _dy_zu * Tracer::ZoneDims_WU::y;
 		const uint16_t _first_idx_in_zone = z * Tracer::zone_node_count;
 		uint16_t inner_zone_idx = 0;
 		for (uint16_t i_wu = 0; i_wu < Tracer::zone_node_count_y*Tracer::WU_per_NU::y; i_wu += Tracer::WU_per_NU::y) {
@@ -108,7 +108,7 @@ void ATopologyTracer::DebugLogConfig() {
 	UE_LOG_VECTOR3(Tracer::WU_per_NU);
 	UE_LOG_VECTOR3(Tracer::GraphDims_NU);
 	UE_LOG_VECTOR3(Tracer::GraphDims_ZU);
-	UE_LOG_VECTOR3(Tracer::WU_per_ZU);
+	UE_LOG_VECTOR3(Tracer::ZoneDims_WU);
 	UE_LOG_VECTOR3(Tracer::ZoneDims_NU);
 	UE_LOG_VECTOR3(Tracer::TopLeftPoint_WU);
 	UE_LOG_VECTOR3(Tracer::BottomLeftPoint_WU);
@@ -166,7 +166,7 @@ const FVector ATopologyTracer::m_wu_per_nu_f = {
 	static_cast<float>(Tracer::WU_per_NU::y),
 	static_cast<float>(Tracer::WU_per_NU::z) };
 
-const FVector ATopologyTracer::m_wu_per_zu_f = {
-	static_cast<float>(Tracer::WU_per_ZU::x),
-	static_cast<float>(Tracer::WU_per_ZU::y),
-	static_cast<float>(Tracer::WU_per_ZU::z) };
+const FVector ATopologyTracer::m_ZoneDims_WU_f = {
+	static_cast<float>(Tracer::ZoneDims_WU::x),
+	static_cast<float>(Tracer::ZoneDims_WU::y),
+	static_cast<float>(Tracer::ZoneDims_WU::z) };
