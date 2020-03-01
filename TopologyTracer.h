@@ -76,15 +76,15 @@ struct PathFinderConfig {
 	using Graph = GridGraph<Node_, Priority_, Heuristic_, 
 		GraphDims_NU, ZoneDims_NU, GraphDims_ZU, Connectors>;
 	
+	template<uint8_t _zone_id>
 	struct GetZoneBLP_WU {
-		template<uint8_t _zone_id>
 		using type = Vector2<
 			BottomLeftPoint_WU::x + (_zone_id % zone_count_x) * ZoneDims_WU::x,
 			BottomLeftPoint_WU::y + (_zone_id / zone_count_x) * ZoneDims_WU::y>;
 	};
 
-	using ZoneBLP_WU = typename TupleForRange<0, zone_count, GetZoneBLP_WU>::type;
-	
+	using TupleZoneBLP_WU = typename TupleForRange<0, zone_count, GetZoneBLP_WU>::type;
+
 
 };
 

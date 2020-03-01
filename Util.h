@@ -67,18 +67,22 @@ tuple_for_each(std::tuple<Tp...>& t, FuncT f) {
 	tuple_for_each<I + 1, FuncT, Tp...>(t, f);
 }
 
-template<std::size_t S, std::size_t E, typename T, 
-	typename std::enable_if<S==E-1, int>::type = 0>
-struct TupleForRange {
-	using type = std::tuple<typename T::type<S>>;
-};
-
-template<std::size_t S, std::size_t E, typename T>
+template<uint8_t S, uint8_t E, template<uint8_t> class C, bool Enabled = false>
 struct TupleForRange {
 	static_assert(S < E, "Invalid template parameters for TupleForRange");
-	using type = std::tuple_cat(std::tuple<typename T::type<S>>,
-		typename TupleForRange<S + 1, E, T>::type);
+	using type = decltype(
+		std::tuple_cat(
+			std::tuple< typename C<S>::type>(),
+			typename TupleForRange<S + 1, E, C, S==E-2>::type()
+		)
+	);
 };
+
+template<uint8_t S, uint8_t E, template<uint8_t> class C>
+struct TupleForRange<S, E, C, true> {
+	using type = std::tuple<typename C<S>::type>;
+};
+
 
 template<int ...I>
 struct IntSequence {};
@@ -322,16 +326,3 @@ struct VectorDiv : public VectorOperator<Sequence1, Sequence2, divides<int>> {};
 template<class Sequence1, class Sequence2,
 VALIDATE(IsSameSize, Sequence1, Sequence2)=0>
 struct VectorSub : public VectorOperator<Sequence1, Sequence2, subtracts<int>> {};
-
-//template<unsigned N, class T>
-//struct Iterator;
-//
-//template<class T>
-//struct Iterator<0, T> {
-//	using type = T<0>;
-//};
-//
-//template<unsigned N, class T>
-//struct Iterator<N, T> {
-//	using type = T<N>;
-//};
