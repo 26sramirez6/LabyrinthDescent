@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <tuple>
 #include <limits>
+#include <random>
 #include <utility> 
 
 #define DOUBLE2INT(i, d) \
@@ -58,13 +59,13 @@ struct tuple_n_t<0, T> {
 
 template<std::size_t I = 0, typename FuncT, typename... Tp>
 inline typename std::enable_if<I == sizeof...(Tp), void>::type
-tuple_for_each(std::tuple<Tp...> &, FuncT) {}
+tuple_for_each_obj(std::tuple<Tp...> &, FuncT) {}
 
 template<std::size_t I = 0, typename FuncT, typename... Tp>
 inline typename std::enable_if < I < sizeof...(Tp), void>::type
-tuple_for_each(std::tuple<Tp...>& t, FuncT f) {
+tuple_for_each_obj(std::tuple<Tp...>& t, FuncT f) {
 	f(std::get<I>(t));
-	tuple_for_each<I + 1, FuncT, Tp...>(t, f);
+	tuple_for_each_obj<I + 1, FuncT, Tp...>(t, f);
 }
 
 template<uint8_t S, uint8_t E, template<uint8_t> class C, bool Enabled = false>
@@ -83,6 +84,16 @@ struct TupleForRange<S, E, C, true> {
 	using type = std::tuple<typename C<S>::type>;
 };
 
+template<class Functor, class Tuple, std::size_t I = 0, typename ...FuncArgs>
+inline typename std::enable_if<I == std::tuple_size<Tuple>::value, void>::type
+tuple_for_each_type(FuncArgs&&... func_args) {}
+
+template<class Functor, class Tuple, std::size_t I = 0, typename ...FuncArgs>
+inline typename std::enable_if < I < std::tuple_size<Tuple>::value, void>::type
+tuple_for_each_type(FuncArgs&&... func_args) {
+	Functor::calc<I, typename std::tuple_element<I, Tuple>::type>(func_args...);
+	tuple_for_each_type<Functor, Tuple, I + 1>(func_args...);
+}
 
 template<int ...I>
 struct IntSequence {};

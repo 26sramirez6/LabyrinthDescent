@@ -10,7 +10,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Util.h"
-#include "PathSettings.h"
+#include "PathFinderConfig.h"
 #include "GridGraph.h"
 
 

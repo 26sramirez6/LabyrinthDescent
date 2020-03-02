@@ -8,7 +8,9 @@
 #include "Target.h"
 #include "UserCharacter.h"
 #include "AStar.h"
-#include "PathSettings.h"
+#include "MobHandler.h"
+#include "MobHandlerSettings.h"
+#include "PathFinderConfig.h"
 #include "Mob.h"
 #include "TopologyTracer.h"
 #include "MyCamera.h"
@@ -63,7 +65,8 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* m_base_mesh;
 
-	AMob* m_mobs;
+	UPROPERTY(VisibleAnywhere)
+	AMobHandler* m_mob_handler;
 
  	FVector2D m_mouse_rotation_delta;
 	FVector m_mouse_location_delta;

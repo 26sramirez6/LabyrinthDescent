@@ -7,6 +7,8 @@
 #include "Engine/World.h"
 #include "Mob.h"
 #include "TopologyTracer.h"
+#include "PathFinderConfig.h"
+#include "MobHandlerSettings.h"
 #include "MobHandler.generated.h"
 
 UCLASS()
@@ -26,8 +28,14 @@ public:
 	template<uint16_t _count_per_zone_x, uint16_t _count_per_zone_y>
 	void SpawnMobsAllZones();
 
+	FORCEINLINE	void 
+	initializeMobHandler(ATopologyTracer const * _topology_tracer) {
+		m_topology_tracer = _topology_tracer;
+		m_is_initialized = true;
+	}
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	AMob * m_mobs;
+	AMob ** m_mobs;
+	ATopologyTracer const * m_topology_tracer;
+	bool m_is_initialized = false;
 };

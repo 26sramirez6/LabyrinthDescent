@@ -9,7 +9,7 @@ ALiveGameHandler::ALiveGameHandler() :
 	bBlockInput = true;
 	bHidden = true;
 	bIgnoresOriginShifting = true;
-	bLockLocation = true;
+	/*bLockLocation = true; causes launch failure?*/
 	PrimaryActorTick.bCanEverTick = true;
 	SetActorLocation(FVector::ZeroVector);
 	SetActorEnableCollision(false);
@@ -27,19 +27,23 @@ ALiveGameHandler::ALiveGameHandler() :
 
 	UWorld * world = GetWorld();
 	if (IsValid(world)) { // must surround in IsValid or crash on load
-		UE_LOG(LogTemp, Log, TEXT("Spawning members in LiveGameHandler"));
+		UE_LOG(LogTemp, Log, TEXT("Spawning core actors in LiveGameHandler"));
 		m_target = world->SpawnActor<ATarget>();
 		m_user_character = world->SpawnActor<AUserCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
 		m_topo = world->SpawnActor<ATopologyTracer>();
-		m_mobs = world->SpawnActor<AMob>();
-		m_topo->Trace();
+		m_mob_handler = world->SpawnActor<AMobHandler>();
+		m_mob_handler->initializeMobHandler(m_topo);
+		m_topo->trace();
 #if DRAW_GRAPH
-		m_topo->DebugDrawGraph(100.f);
+		m_topo->debugDrawGraph(100.f);
+#endif
+
+#if SPAWN_MOBS
+		m_mob_handler->SpawnMobsAllZones<MOB_COUNT_PER_ZONE_X, MOB_COUNT_PER_ZONE_Y>();
 #endif
 	}
 }
 
- //Called when the game starts or when spawned
 void ALiveGameHandler::BeginPlay() {
 	Super::BeginPlay();
 	// TODO: Why won't these work in the constructor?, overridden by PIE
@@ -47,7 +51,6 @@ void ALiveGameHandler::BeginPlay() {
 	m_base_mesh->SetRelativeLocation(m_base_mesh_start_location);
 }
 
- //Called every frame
 void ALiveGameHandler::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
@@ -73,7 +76,7 @@ void ALiveGameHandler::SetLiveGameTargetOnClick() {
 	if (pc->GetHitResultAtScreenPosition(
 		mouse_position, CollisionChannels::Topology, trace_complex, hit_result)) {
 		m_target->RecieveNewTarget(hit_result.Location);
-		m_topo->RequestPath(m_user_character->GetActorLocation(), hit_result.Location);
+		m_topo->requestPath(m_user_character->GetActorLocation(), hit_result.Location);
 	}
 }
 

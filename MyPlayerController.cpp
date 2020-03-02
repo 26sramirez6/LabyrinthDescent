@@ -9,7 +9,7 @@ AMyPlayerController::AMyPlayerController() {
 	bEnableMouseOverEvents = true;
 	bHidden = true;
 	bIgnoresOriginShifting = true;
-	bLockLocation = true;
+	/*bLockLocation = true; causes launch failure?*/
 	
 	PlayerCameraManagerClass = ALDPlayerCameraManager::StaticClass();
 	if (GEngine && GEngine->GameViewport) {
