@@ -15,6 +15,7 @@ AMob::AMob() : m_new_target_tick_frequency(FMath::RandRange(50, 1000)) {
 			ECollisionResponse::ECR_Ignore);
 	} 
 	
+	m_current_path.reserve(EnabledPathFinderConfig::zone_node_count);
 }
 
 void AMob::BeginPlay() {
@@ -42,6 +43,6 @@ void AMob::generateNewTargetNode() {
 	const FVector& _start = GetActorLocation();
 	EnabledPathFinderConfig::Node const * const _end_node = 
 		m_topology_tracer->getRandomNodeInZone(m_spawn_zone_id);
-	m_topology_tracer->requestPath(_start, _end_node);
+	m_topology_tracer->requestPath(_start, _end_node, m_current_path);
 }
 

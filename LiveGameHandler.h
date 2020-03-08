@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Target.h"
+#include "UserCharacterTarget.h"
 #include "UserCharacter.h"
 #include "AStar.h"
 #include "MobHandler.h"
@@ -45,10 +45,10 @@ public:
 
 private:
 	friend class AMyPlayerController;
-	void SetLiveGameTargetOnClick();
+	void setLiveGameTargetOnClick();
 
 	UPROPERTY(VisibleAnywhere)
-	ATarget* m_target;
+	AUserCharacterTarget* m_target;
 
 	UPROPERTY(VisibleAnywhere)
 	AUserCharacter* m_user_character;

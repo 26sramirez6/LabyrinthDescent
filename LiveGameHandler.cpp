@@ -28,8 +28,9 @@ ALiveGameHandler::ALiveGameHandler() :
 	UWorld * world = GetWorld();
 	if (IsValid(world)) { // must surround in IsValid or crash on load
 		UE_LOG(LogTemp, Log, TEXT("Spawning core actors in LiveGameHandler"));
-		m_target = world->SpawnActor<ATarget>();
+		m_target = world->SpawnActor<AUserCharacterTarget>();
 		m_user_character = world->SpawnActor<AUserCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+		m_user_character->setTargetObject(m_target);
 		m_topo = world->SpawnActor<ATopologyTracer>();
 		m_mob_handler = world->SpawnActor<AMobHandler>();
 		m_mob_handler->initializeMobHandler(m_topo);
@@ -66,7 +67,7 @@ void ALiveGameHandler::Tick(float DeltaTime) {
 		m_arm_length_delta, 0.f, 2000.f);
 }
 
-void ALiveGameHandler::SetLiveGameTargetOnClick() {
+void ALiveGameHandler::setLiveGameTargetOnClick() {
 	APlayerController * pc = static_cast<APlayerController*>(this->GetController());
 	float x, y;
 	pc->GetMousePosition(x, y);
@@ -75,8 +76,11 @@ void ALiveGameHandler::SetLiveGameTargetOnClick() {
 	const bool trace_complex = false;
 	if (pc->GetHitResultAtScreenPosition(
 		mouse_position, CollisionChannels::Topology, trace_complex, hit_result)) {
-		m_target->RecieveNewTarget(hit_result.Location);
-		m_topo->requestPath(m_user_character->GetActorLocation(), hit_result.Location);
+		m_target->recieveNewTarget(hit_result.Location);
+		const bool _path_found = m_topo->requestPath(
+			m_user_character->GetActorLocation(), 
+			hit_result.Location, m_user_character->getPathBuffer());
+		if (_path_found) m_user_character->alertPathFound();
 	}
 }
 

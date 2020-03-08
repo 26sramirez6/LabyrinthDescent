@@ -6,20 +6,20 @@
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "CollisionChannels.h"
-#include "Target.generated.h"
+#include "UserCharacterTarget.generated.h"
 
 // forward declared for friend
 class ALiveGameHandler;
 
 UCLASS()
-class LABYRINTHDESCENT_API ATarget : public AActor
+class LABYRINTHDESCENT_API AUserCharacterTarget : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	ATarget();
+	AUserCharacterTarget();
 
-	void RecieveNewTarget(const FVector& _target) { 
+	void recieveNewTarget(const FVector& _target) { 
 		this->SetActorLocation(_target, false);
 		m_target.Set(_target.X, _target.Y, _target.Z);
 		UE_LOG(LogTemp, Log, TEXT("Target value: %s"), *m_target.ToString());

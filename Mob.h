@@ -45,4 +45,6 @@ private:
 	uint32_t m_ticks;
 	uint8_t m_spawn_zone_id;
 	bool m_is_initialized = false;
+
+	std::vector<EnabledPathFinderConfig::Node const *> m_current_path;
 };

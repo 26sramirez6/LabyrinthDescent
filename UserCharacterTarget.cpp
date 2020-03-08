@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Target.h"
+#include "UserCharacterTarget.h"
 
-ATarget::ATarget() : m_target(ForceInitToZero) {
+AUserCharacterTarget::AUserCharacterTarget() : m_target(ForceInitToZero) {
 	PrimaryActorTick.bCanEverTick = true;
 	bBlockInput = true;
 	SetActorEnableCollision(false);
@@ -19,12 +19,12 @@ ATarget::ATarget() : m_target(ForceInitToZero) {
 	}
 }
 
-void ATarget::BeginPlay() {
+void AUserCharacterTarget::BeginPlay() {
 	Super::BeginPlay();
 	
 }
 
-void ATarget::Tick(float DeltaTime) {
+void AUserCharacterTarget::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 }

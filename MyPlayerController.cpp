@@ -65,7 +65,7 @@ void AMyPlayerController::OnCtrlReleased() { m_ctrl_pressed = false; }
 
 void AMyPlayerController::OnRightClick() {
 	if (m_in_live_game && IsValid(m_live_game_handler)) {
-		m_live_game_handler->SetLiveGameTargetOnClick();
+		m_live_game_handler->setLiveGameTargetOnClick();
 	}
 }
 

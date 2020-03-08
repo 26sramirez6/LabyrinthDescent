@@ -117,15 +117,14 @@ void ATopologyTracer::debugLogConfig() {
 	UE_LOG(LogTemp, Log, TEXT("node count %d"), EnabledPathFinderConfig::node_count);
 }
 
-void ATopologyTracer::requestPathImp(
+bool ATopologyTracer::requestPathImp(
 	EnabledPathFinderConfig::Node const * const _start_node,
-	EnabledPathFinderConfig::Node const * const _end_node) const {
-	std::vector<EnabledPathFinderConfig::Node const *> path;
-	path.reserve(m_path_size_reservation);
+	EnabledPathFinderConfig::Node const * const _end_node,
+	std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
 #if DRAW_FRONTIER
-	const bool _path_found = AStar<EnabledPathFinderConfig::Graph>::Search(m_base_graph, _start_node, _end_node, path, GetWorld());
+	const bool _path_found = AStar<EnabledPathFinderConfig::Graph>::Search(m_base_graph, _start_node, _end_node, path_, GetWorld());
 #else
-	const bool _path_found = AStar<EnabledPathFinderConfig::Graph>::Search(m_base_graph, _start_node, _end_node, path);
+	const bool _path_found = AStar<EnabledPathFinderConfig::Graph>::Search(m_base_graph, _start_node, _end_node, path_);
 #endif
 
 #if LOG_PATH_DIAGNOSTICS
@@ -145,6 +144,7 @@ void ATopologyTracer::requestPathImp(
 #if DRAW_PATH
 	if (_path_found) debugDrawPath(path, 5.f);
 #endif
+	return _path_found;
 }
 
 void ATopologyTracer::debugDrawPath(const std::vector<EnabledPathFinderConfig::Node const *>& _path, const float _time) const {

@@ -66,36 +66,47 @@ public:
 		return &m_base_graph->m_nodes[FMath::RandRange(_min_node_id, _max_node_id)];
 	};
 
-	FORCEINLINE void
+	FORCEINLINE bool
 	requestPath(
 		EnabledPathFinderConfig::Node const * const _start_node,
-		EnabledPathFinderConfig::Node const * const _end_node) const {
-		requestPathImp(_start_node, _end_node);
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
+		return requestPathImp(_start_node, _end_node, path_);
 	};
 
-	FORCEINLINE void
-	requestPath(const FVector& _start_vec, const FVector& _end_vec) const {
+	FORCEINLINE bool
+	requestPath(
+		const FVector& _start_vec, 
+		const FVector& _end_vec,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
 		EnabledPathFinderConfig::Node const * const _start_node = getNearestNode(_start_vec);
 		EnabledPathFinderConfig::Node const * const _end_node = getNearestNode(_end_vec);
-		requestPathImp(_start_node, _end_node);
+		return requestPathImp(_start_node, _end_node, path_);
 	};
 
-	FORCEINLINE void
-	requestPath(const FVector& _start_vec, EnabledPathFinderConfig::Node const * const _end_node) const {
+	FORCEINLINE bool
+	requestPath(
+		const FVector& _start_vec, 
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
 		EnabledPathFinderConfig::Node const * const _start_node = getNearestNode(_start_vec);
-		requestPathImp(_start_node, _end_node);
+		return requestPathImp(_start_node, _end_node, path_);
 	};
 
-	FORCEINLINE void
-	requestPath(EnabledPathFinderConfig::Node const * const _start_node, const FVector& _end_vec) const {
+	FORCEINLINE bool
+	requestPath(
+		EnabledPathFinderConfig::Node const * const _start_node, 
+		const FVector& _end_vec,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
 		EnabledPathFinderConfig::Node const * const _end_node = getNearestNode(_end_vec);
-		requestPathImp(_start_node, _end_node);
+		return requestPathImp(_start_node, _end_node, path_);
 	};
 
 private:
-	void requestPathImp(
+	bool requestPathImp(
 		EnabledPathFinderConfig::Node const * const _start_node,
-		EnabledPathFinderConfig::Node const * const _end_node) const;
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const;
 
 protected:
 	virtual void BeginPlay() override;
