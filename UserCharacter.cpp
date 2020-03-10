@@ -57,13 +57,51 @@ void AUserCharacter::tickStartOnPath(const float _delta_time) {
 }
 
 void AUserCharacter::tickContinueOnPath(const float _delta_time) {
-	const FVector _current = GetActorLocation();
-	const FVector _dir = (m_current_waypoint_vec - _current)*_delta_time*m_speed;
-	SetActorLocation(_current + _dir);
+	const FVector _current_loc = GetActorLocation();
+	const FVector _forward = GetActorForwardVector();
+	const FRotator _current_rot = GetActorRotation();
+	const unsigned _path_size = m_current_path.size();
+	//m_current_waypoint = m_current_waypoint >= _path_size ? _path_size - 1 : m_current_waypoint;
+	while (true) {
+		if (LIKELY(m_current_waypoint < _path_size - 1)) {
+			const float _dist_to_next_waypoint =
+				FVector::Dist2D(m_current_waypoint_vec, _current_loc);
+			if (_dist_to_next_waypoint < m_pick_next_waypoint_distance) {
+				m_current_waypoint_node = m_current_path[++m_current_waypoint];
+				m_current_waypoint_node->ToVector(m_current_waypoint_vec);
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+
+	FVector dir = (m_current_waypoint_vec - _current_loc);
+	const float _target_dist_to_next_waypoint = dir.Size();
+	dir.Normalize();
+	
+	if (UNLIKELY(m_current_waypoint == _path_size &&
+		_target_dist_to_next_waypoint < m_end_reached_distance)) {
+		m_target_reached = true;
+		m_current_state = StateTypes::EndPath;
+	} else {
+		const float _slow_down = LIKELY(_target_dist_to_next_waypoint > m_slow_down_distance) ? 
+			1.f : _target_dist_to_next_waypoint / m_slow_down_distance;
+		const float _factor = _delta_time * m_run_speed * _slow_down;
+		const FVector _delta_loc = _forward * _factor;
+		AddActorWorldOffset(_delta_loc);
+	}
+	
+	const FRotator _target_rot = UKismetMathLibrary::FindLookAtRotation(_current_loc, m_current_waypoint_vec);
+	const FRotator _delta_rot = FQuat::Slerp(_current_rot.Quaternion(),
+		_target_rot.Quaternion(), m_turn_speed*_delta_time).Rotator();	
+	AddActorWorldRotation(_delta_rot);
 }
 
 void AUserCharacter::tickEndPath(const float _delta_time) {
 	m_queue_new_path = false;
+	// finish out rotations
 }
 
 void AUserCharacter::tickIdle(const float _delta_time) {

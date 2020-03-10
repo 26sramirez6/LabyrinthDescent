@@ -7,6 +7,7 @@
 #include "StateHandler.h"
 #include "GameFramework/Actor.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "CollisionChannels.h"
 #include "UserCharacterTarget.h"
 #include "UserCharacter.generated.h"
@@ -41,7 +42,13 @@ private:
 	void tickContinueOnPath(const float _delta_time);
 	void tickEndPath(const float _delta_time);
 	void tickIdle(const float _delta_time);
-	
+
+protected:
+	const float m_run_speed = 1.f;
+	const float m_turn_speed = 0.3f;
+	const float m_slow_down_distance = 0.6f;
+	const float m_end_reached_distance = 0.5f;
+	const float m_pick_next_waypoint_distance = 1.f;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -55,10 +62,10 @@ private:
 	StateTypes m_current_state = StateTypes::Idle;
 
 	bool m_queue_new_path = false;
+	bool m_target_reached = false;
 	uint16_t m_current_waypoint = 0;
 	EnabledPathFinderConfig::Node const * m_current_waypoint_node;
 	FVector m_current_waypoint_vec;
+	
 
-protected:
-	float m_speed = 1.f;
 };
