@@ -2,41 +2,120 @@
 
 #pragma once
 
+#include <type_traits>
+#include <vector>
+#include <unordered_map>
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CollisionQueryParams.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
+#include "Util.h"
+#include "PathFinderConfig.h"
+#include "CollisionChannels.h"
+#include "Heuristics.h"
+#include "AStar.h"
+#include "GridGraph.h"
+#include "Node.h"
 #include "TopologyTracer.generated.h"
 
+
 UCLASS()
-template<unsigned NodeCount = 1024> 
-class LABYRINTHDESCENT_API ATopologyTracer : public AActor
-{
+class LABYRINTHDESCENT_API ATopologyTracer : public AActor {
+
 	GENERATED_BODY()
-  
-public:	
-	static constexpr unsigned node_count = NodeCount;
-	FVector m_world_center;
-	FVector m_world_bounds;
 
-	ATopologyTracer(const FObjectInitializer& ObjectInitializer)
-		: Super(ObjectInitializer), m_center(0,0,0), m_bounds(500,500,500) {
-	}
+public:
+	ATopologyTracer();
+	~ATopologyTracer();
+	void trace();
+	void debugDrawGraph(const float _time) const;
+	void debugDrawPath(const std::vector<EnabledPathFinderConfig::Node const *>& _path, const float _time) const;
+	static void debugLogConfig();
 
-protected:
-	virtual void BeginPlay() override {
-		UWorld * world = this->GetWorld();
-		FHitResult out_hit;
-		
-		for (unsigned i = 0; i < NodeCount; i++) {
-			world->LineTraceSingleByChannel(
-				out_hit,
-				const FVector & Start,
-				const FVector & End,
-				ECollisionChannel TraceChannel,
-				const FCollisionQueryParams & Params,
-				const FCollisionResponseParams & ResponseParam);
-		}
+	FORCEINLINE EnabledPathFinderConfig::Node const * const 
+	getNearestNode(const FVector& _target) const {
+		const uint8_t _zone_id = getNearestZone(_target);
+		const uint8_t _dx_zu = _zone_id % EnabledPathFinderConfig::zone_count_x; // zones up
+		const uint8_t _dy_zu = _zone_id / EnabledPathFinderConfig::zone_count_x; // zones to the right
+		const int16_t _zone_blp_wu_x = EnabledPathFinderConfig::BottomLeftPoint_WU::x + _dx_zu * EnabledPathFinderConfig::ZoneDims_WU::x;
+		const int16_t _zone_blp_wu_y = EnabledPathFinderConfig::BottomLeftPoint_WU::y + _dy_zu * EnabledPathFinderConfig::ZoneDims_WU::y;
+
+		const uint16_t _node_id_within_zone = static_cast<uint16_t>(
+			static_cast<uint16_t>((_target.Y - _zone_blp_wu_y) / m_wu_per_nu_f.Y) * EnabledPathFinderConfig::zone_node_count_x +
+			(_target.X - _zone_blp_wu_x) / m_wu_per_nu_f.X
+		);
+		const uint16_t _node_id = _zone_id * EnabledPathFinderConfig::zone_node_count + _node_id_within_zone;
+		return &m_base_graph->m_nodes[_node_id];
 	};
 
-public:	
-	virtual void Tick(float DeltaTime) override;
+	FORCEINLINE uint8_t
+	getNearestZone(const FVector& _target) const {
+		const float _dy_wu = _target.Y - EnabledPathFinderConfig::BottomLeftPoint_WU::y;
+		const float _dx_wu = _target.X - EnabledPathFinderConfig::BottomLeftPoint_WU::x;
+		uint8_t _dy_zu = static_cast<uint8_t>(_dy_wu / m_ZoneDims_WU_f.Y) * EnabledPathFinderConfig::zone_count_x;
+		uint8_t _dx_zu = static_cast<uint8_t>(_dx_wu / m_ZoneDims_WU_f.X);
+		return _dy_zu + _dx_zu;
+	};
+
+	FORCEINLINE EnabledPathFinderConfig::Node const * const
+	getRandomNodeInZone(const uint8_t _zone_id) const {
+		const uint16_t _min_node_id = EnabledPathFinderConfig::zone_node_count * _zone_id;
+		const uint16_t _max_node_id = _min_node_id + EnabledPathFinderConfig::zone_node_count;
+		return &m_base_graph->m_nodes[FMath::RandRange(_min_node_id, _max_node_id)];
+	};
+
+	FORCEINLINE bool
+	requestPath(
+		EnabledPathFinderConfig::Node const * const _start_node,
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
+		return requestPathImp(_start_node, _end_node, path_);
+	};
+
+	FORCEINLINE bool
+	requestPath(
+		const FVector& _start_vec, 
+		const FVector& _end_vec,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
+		EnabledPathFinderConfig::Node const * const _start_node = getNearestNode(_start_vec);
+		EnabledPathFinderConfig::Node const * const _end_node = getNearestNode(_end_vec);
+		return requestPathImp(_start_node, _end_node, path_);
+	};
+
+	FORCEINLINE bool
+	requestPath(
+		const FVector& _start_vec, 
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
+		EnabledPathFinderConfig::Node const * const _start_node = getNearestNode(_start_vec);
+		return requestPathImp(_start_node, _end_node, path_);
+	};
+
+	FORCEINLINE bool
+	requestPath(
+		EnabledPathFinderConfig::Node const * const _start_node, 
+		const FVector& _end_vec,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const {
+		EnabledPathFinderConfig::Node const * const _end_node = getNearestNode(_end_vec);
+		return requestPathImp(_start_node, _end_node, path_);
+	};
+
+private:
+	bool requestPathImp(
+		EnabledPathFinderConfig::Node const * const _start_node,
+		EnabledPathFinderConfig::Node const * const _end_node,
+		std::vector<EnabledPathFinderConfig::Node const *>& path_) const;
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	EnabledPathFinderConfig::Graph* m_base_graph { nullptr };
+	AStar<EnabledPathFinderConfig::Graph> m_astar;
+
+	static const FVector m_wu_per_nu_f;
+	static const FVector m_ZoneDims_WU_f;
+	static const uint16_t m_path_size_reservation = EnabledPathFinderConfig::zone_node_count;
 };

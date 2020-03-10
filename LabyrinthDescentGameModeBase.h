@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "MyPlayerController.h"
+#include "TopologyTracer.h"
+#include "LiveGameHandler.h"
+#include "Util.h"
 #include "LabyrinthDescentGameModeBase.generated.h"
 
 /**
@@ -16,10 +19,11 @@ class LABYRINTHDESCENT_API ALabyrinthDescentGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+
 	ALabyrinthDescentGameModeBase(const FObjectInitializer& ObjectInitializer)
 		: Super(ObjectInitializer) {
 		this->PlayerControllerClass = AMyPlayerController::StaticClass();
-		this->DefaultPawnClass = ATarget::StaticClass();
+		this->DefaultPawnClass = ALiveGameHandler::StaticClass();
 
 		UE_LOG(LogTemp, Log, TEXT("Initializing Labyrinth Descent Game Mode Base"));
 	}
