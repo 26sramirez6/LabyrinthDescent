@@ -142,7 +142,7 @@ bool ATopologyTracer::requestPathImp(
 #endif
 
 #if DRAW_PATH
-	if (_path_found) debugDrawPath(path, 5.f);
+	if (_path_found) debugDrawPath(path_, 5.f);
 #endif
 	return _path_found;
 }

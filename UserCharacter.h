@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PathFinderConfig.h"
 #include "StateHandler.h"
+#include "DrawDebugHelpers.h"
 #include "GameFramework/Actor.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -44,8 +45,8 @@ private:
 	void tickIdle(const float _delta_time);
 
 protected:
-	const float m_run_speed = 1.f;
-	const float m_turn_speed = 0.3f;
+	const float m_run_speed = 100.f;
+	const float m_turn_speed = 5.f;
 	const float m_slow_down_distance = 0.6f;
 	const float m_end_reached_distance = 0.5f;
 	const float m_pick_next_waypoint_distance = 1.f;

@@ -66,6 +66,9 @@ void AUserCharacter::tickContinueOnPath(const float _delta_time) {
 		if (LIKELY(m_current_waypoint < _path_size - 1)) {
 			const float _dist_to_next_waypoint =
 				FVector::Dist2D(m_current_waypoint_vec, _current_loc);
+			UE_LOG(LogTemp, Log, TEXT("current waypoint: %d"), m_current_waypoint);
+			UE_LOG(LogTemp, Log, TEXT("dist to next waypoint: %f"), _dist_to_next_waypoint);
+			
 			if (_dist_to_next_waypoint < m_pick_next_waypoint_distance) {
 				m_current_waypoint_node = m_current_path[++m_current_waypoint];
 				m_current_waypoint_node->ToVector(m_current_waypoint_vec);
@@ -79,7 +82,7 @@ void AUserCharacter::tickContinueOnPath(const float _delta_time) {
 
 	FVector dir = (m_current_waypoint_vec - _current_loc);
 	const float _target_dist_to_next_waypoint = dir.Size();
-	dir.Normalize();
+	//dir.Normalize();
 	
 	if (UNLIKELY(m_current_waypoint == _path_size &&
 		_target_dist_to_next_waypoint < m_end_reached_distance)) {
@@ -95,13 +98,17 @@ void AUserCharacter::tickContinueOnPath(const float _delta_time) {
 	
 	const FRotator _target_rot = UKismetMathLibrary::FindLookAtRotation(_current_loc, m_current_waypoint_vec);
 	const FRotator _delta_rot = FQuat::Slerp(_current_rot.Quaternion(),
-		_target_rot.Quaternion(), m_turn_speed*_delta_time).Rotator();	
-	AddActorWorldRotation(_delta_rot);
+		_target_rot.Quaternion(), m_turn_speed*_delta_time).Rotator();
+
+	DrawDebugLine(GetWorld(), _current_loc, m_current_waypoint_vec, FColor::Cyan, false, 1.f, 0, .5f);
+	SetActorRotation(_delta_rot);
+
 }
 
 void AUserCharacter::tickEndPath(const float _delta_time) {
 	m_queue_new_path = false;
 	// finish out rotations
+	m_current_state = StateTypes::Idle;
 }
 
 void AUserCharacter::tickIdle(const float _delta_time) {
