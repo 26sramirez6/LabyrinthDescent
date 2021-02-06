@@ -31,6 +31,9 @@ public:
 	getPathBuffer() { return m_current_path; }
 
 	FORCEINLINE void
+	clearPathBuffer() { if (m_current_path.size() > 0) m_current_path.clear();  }
+
+	FORCEINLINE void
 	alertPathFound() { m_queue_new_path = true; }
 
 private:
@@ -45,11 +48,20 @@ private:
 	void tickIdle(const float _delta_time);
 
 protected:
-	const float m_run_speed = 100.f;
-	const float m_turn_speed = 5.f;
-	const float m_slow_down_distance = 0.6f;
-	const float m_end_reached_distance = 0.5f;
-	const float m_pick_next_waypoint_distance = 1.f;
+	UPROPERTY(EditInstanceOnly)
+	float m_run_speed = 100.f;
+
+	UPROPERTY(EditInstanceOnly)
+	float m_turn_speed = 4.f;
+
+	UPROPERTY(EditInstanceOnly)
+	float m_slow_down_distance = 25.f;
+
+	UPROPERTY(EditInstanceOnly)
+	float m_end_reached_distance = 20.f;
+
+	UPROPERTY(EditInstanceOnly)
+	float m_pick_next_waypoint_distance = 50.f;
 
 private:
 	UPROPERTY(VisibleAnywhere)

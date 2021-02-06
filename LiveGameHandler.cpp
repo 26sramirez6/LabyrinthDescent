@@ -77,9 +77,13 @@ void ALiveGameHandler::setLiveGameTargetOnClick() {
 	if (pc->GetHitResultAtScreenPosition(
 		mouse_position, CollisionChannels::Topology, trace_complex, hit_result)) {
 		m_target->recieveNewTarget(hit_result.Location);
+
+		m_user_character->clearPathBuffer();
+
 		const bool _path_found = m_topo->requestPath(
 			m_user_character->GetActorLocation(), 
 			hit_result.Location, m_user_character->getPathBuffer());
+
 		if (_path_found) m_user_character->alertPathFound();
 	}
 }
